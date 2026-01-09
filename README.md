@@ -24,14 +24,125 @@ The API is responsible for:
 - Basic audit/execution logs
 
 ## Tech Stack (planned)
-- Node.js (TypeScript recommended)
+- Node.js (TypeScript)
 - Octokit (GitHub API + webhooks)
-- Postgres (Supabase/Neon/etc.)
-- Hosted on Render/Fly.io/DigitalOcean (TBD)
+- Postgres (Supabase / Neon / etc.)
+- Hosted on Render / Fly.io / DigitalOcean (TBD)
 
-## Local Development (placeholder)
-> Setup instructions will be added once the initial server skeleton is committed.
+## Local Development
+
+### Start the API server
+
+```<bash>
+npm install
+npm run dev
+```
+
+The server runs on:
+
+```<text>
+http://localhost:3000
+```
+
+Health check:
+
+```<bash>
+curl http://localhost:3000/health
+```
+
+Expected response:
+
+```<json>
+{ "ok": true }
+```
+
+---
+
+## Testing GitHub Webhooks Locally (ngrok)
+
+During development, the API must receive **real GitHub webhook traffic**.  
+This is done by exposing the local server using **ngrok**.
+
+### Prerequisites
+- Node.js (LTS)
+- ngrok account (free tier is sufficient)
+- Flowarden GitHub App created
+
+---
+
+### 1️⃣ Start ngrok
+
+```<bash>
+ngrok http 3000
+```
+
+Example output:
+
+```<text>
+https://lucy-plotful-daine.ngrok-free.dev
+```
+
+⚠️ Use the **HTTPS** URL only.
+
+---
+
+### 2️⃣ Configure the GitHub App webhook
+
+Webhook URL:
+
+```<text>
+https://<your-ngrok-url>/webhooks/github
+```
+
+Example:
+
+```<text>
+https://lucy-plotful-daine.ngrok-free.dev/webhooks/github
+```
+
+Content type:
+
+```<text>
+application/json
+```
+
+Webhook secret:
+- Must match `GITHUB_WEBHOOK_SECRET` in `.env`
+
+---
+
+### 3️⃣ Redeliver a test webhook
+
+GitHub App → **Advanced → Webhooks**  
+Select a delivery → **Redeliver**
+
+Expected:
+- GitHub returns **200**
+- API logs the event
+- Headers include `X-GitHub-Event`
+
+---
+
+### Common Issues
+
+**404**
+- Check `/webhooks/github`
+- Confirm server is running
+
+**Signature verification failed**
+- Secret mismatch
+- Raw body middleware missing
+
+**ngrok not found**
+- Install from https://ngrok.com/download
+
+---
+
+### Notes
+- ngrok URLs change on restart
+- Update webhook URL accordingly
+- Local development only
 
 ## Related Repositories
-- **Project hub / docs:** https://github.com/JesseCaddell/AD490-Capstone
-- **Frontend (Web UI):** https://github.com/JesseCaddell/ad490-workflow-automator-web
+- Project hub: https://github.com/JesseCaddell/AD490-Capstone
+- Frontend UI: https://github.com/JesseCaddell/ad490-workflow-automator-web
