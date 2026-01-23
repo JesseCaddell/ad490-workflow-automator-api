@@ -46,3 +46,20 @@
 ### Error behavior (MVP)
 - If an action fails, mark action as failed in logs and continue to next action (no retries yet)
 - Rule evaluation is deterministic: same context + same rule set => same matched rules
+
+### Rule Source & Storage (MVP)
+
+The rules engine does not own persistence logic.
+
+Rules are retrieved through a storage adapter that returns
+repository-scoped rules using:
+
+- Installation ID
+- Repository ID
+
+The engine assumes:
+- Rules are already validated against the schema
+- Rule ordering is deterministic
+- Storage may be in-memory or persistent (implementation-dependent)
+
+For MVP, an in-memory storage adapter is used.
