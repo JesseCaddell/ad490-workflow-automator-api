@@ -14,7 +14,7 @@ export interface SeedSpec {
  */
 export const DEFAULT_SEED_SPECS: SeedSpec[] = [
     {
-        owner: { installationId: 1058080469, repositoryId: 1140915493 }, // replace with your dev install/repo IDs TODO: find installation ID ad repoID
+        owner: { installationId: 1058080469, repositoryId: 1140915493 }, // replace with your dev install/repo IDs
         rules: [
             {
                 id: "seed-pr-opened-wip-label",
