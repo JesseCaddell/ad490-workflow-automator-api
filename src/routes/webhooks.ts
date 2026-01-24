@@ -10,11 +10,7 @@ export const githubWebhookRouter = express.Router();
  * NOTE: This MUST run before the handler that validates the signature.
  */
 githubWebhookRouter.use(
-    express.json({
-        verify: (req: any, _res, buf) => {
-            req.rawBody = buf;
-        },
-    })
+    express.raw({ type: "application/json" })
 );
 
 githubWebhookRouter.post("/", (req: any, res) => {
@@ -25,7 +21,7 @@ githubWebhookRouter.post("/", (req: any, res) => {
     }
 
     const hmac = crypto.createHmac("sha256", env.GITHUB_WEBHOOK_SECRET);
-    const digest = `sha256=${hmac.update(req.rawBody).digest("hex")}`;
+    const digest = `sha256=${hmac.update(req.body).digest("hex")}`;
 
     const sigBuf = Buffer.from(signature);
     const digBuf = Buffer.from(digest);
