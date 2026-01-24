@@ -49,3 +49,7 @@ Add a small set of hardcoded or file-seeded rules for a known test repo:
 - No audit log/history
 
 **Exit criteria for MVP:** engine can fetch repo-scoped rules deterministically and tests/dev seeds prove the lookup works.
+
+> Note: Webhook signature verification requires the GitHub App webhook
+> secret to be configured in both the GitHub App settings and the API
+> environment. Unsigned deliveries will be rejected with 401.
