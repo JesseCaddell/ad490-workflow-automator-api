@@ -1,4 +1,4 @@
-import type { ConditionLeaf, ConditionValue } from "../types.js";
+import type { ConditionLeaf } from "../types.js";
 
 function isPrimitive(v: unknown): v is string | number | boolean | null {
     return (

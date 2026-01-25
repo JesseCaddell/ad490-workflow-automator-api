@@ -12,7 +12,7 @@ function isRecord(v: unknown): v is AnyRecord {
  * - Otherwise, assume the path is rooted in ctx.data (so "pullRequest.base.ref" works).
  */
 export function getValueAtPath(ctx: RuleContext, path: string): unknown {
-    if (!path || typeof path !== "string") return undefined;
+    if (path.trim() === "") return undefined;
 
     const rootPrefixes = ["event.", "repository.", "actor.", "data."];
 
