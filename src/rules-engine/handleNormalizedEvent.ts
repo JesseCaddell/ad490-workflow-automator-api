@@ -16,18 +16,32 @@ export async function handleNormalizedEvent(
         installationId: input.installationId,
     });
 
-    console.log("[rules-engine]", {
-        event: input.ctx.event.name,
-        repo: input.ctx.repository.fullName,
-        matchedRuleIds,
-        actions: actions.map((a) => ({
-            ruleId: a.ruleId,
-            type: a.type,
-            paramsKeys: a.params ? Object.keys(a.params) : [],
-        })),
-    });
+    // Structured logs for debugging + demo visibility
+    console.log(
+        "[rules-engine] evaluation",
+        JSON.stringify(
+            {
+                installationId: input.installationId,
+                event: {
+                    name: input.ctx.event.name,
+                    id: input.ctx.event.deliveryId,
+                },
+                repository: {
+                    id: input.ctx.repository.id,
+                    fullName: input.ctx.repository.fullName,
+                },
+                matchedRuleIds,
+                actions: actions.map((a) => ({
+                    ruleId: a.ruleId,
+                    type: a.type,
+                    paramKeys: a.params ? Object.keys(a.params) : [],
+                })),
+            },
+            null,
+            2
+        )
+    );
 
-    //TODO: MVP: stop here. Next issue plugs in execution.
+    // MVP stops here. Next issue: execute actions.
 }
-
 

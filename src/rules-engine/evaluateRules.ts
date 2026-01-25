@@ -1,4 +1,10 @@
-import type { Action, Rule, RuleContext, RuleId, RuleEvaluationMode } from "./types.js";
+import type {
+    Action,
+    Rule,
+    RuleContext,
+    RuleId,
+    RuleEvaluationMode,
+} from "./types.js";
 import type { RuleStore } from "./storage/ruleStore.js";
 import { evaluateConditionNode } from "./conditions/evaluateConditionNode.js";
 
@@ -20,7 +26,10 @@ const DEFAULT_MODE: RuleEvaluationMode = "allMatches";
 
 /**
  * Evaluate a normalized RuleContext against stored rules (repo-scoped).
- * Deterministic output: same ctx + same rules => same matches + action order.
+ * Deterministic output:
+ *  - Stable rule ordering
+ *  - Stable action ordering
+ *  - Explicit evaluation modes
  */
 export async function evaluateRules(
     store: RuleStore,
@@ -31,35 +40,62 @@ export async function evaluateRules(
         repositoryId: input.ctx.repository.id,
     });
 
-    // 1) Filter enabled + matching trigger
-    const eligible = rules.filter((r) => r.enabled && r.trigger?.event === input.ctx.event.name);
+    /**
+     * 1) Filter to rules that can even be considered
+     */
+    const eligibleRules = rules.filter(
+        (rule) =>
+            rule.enabled === true &&
+            rule.trigger?.event === input.ctx.event.name
+    );
 
-    // 2) Deterministic ordering (do not rely on storage order)
-    const ordered = eligible.slice().sort((a, b) => {
-        // If you later add priority, it goes here. For now: stable by id.
+    /**
+     * 2) Deterministic rule ordering
+     *    - priority DESC (if present)
+     *    - id ASC (tie-breaker)
+     */
+    const orderedRules = eligibleRules.slice().sort((a, b) => {
+        const aPriority = typeof (a as any).priority === "number" ? (a as any).priority : 0;
+        const bPriority = typeof (b as any).priority === "number" ? (b as any).priority : 0;
+
+        if (aPriority !== bPriority) {
+            return bPriority - aPriority;
+        }
+
         return String(a.id).localeCompare(String(b.id));
     });
 
-    const matched: Rule[] = [];
-    for (const rule of ordered) {
-        const ok = evaluateConditionNode(rule.conditions, input.ctx);
-        if (!ok) continue;
+    /**
+     * 3) Evaluate rules in order
+     */
+    const matchedRules: Rule[] = [];
 
-        matched.push(rule);
+    for (const rule of orderedRules) {
+        const conditionsPass = evaluateConditionNode(rule.conditions, input.ctx);
+        if (!conditionsPass) continue;
+
+        matchedRules.push(rule);
 
         const mode = rule.evaluation?.mode ?? DEFAULT_MODE;
-        if (mode === "firstMatch") break;
+        if (mode === "firstMatch") {
+            break;
+        }
     }
 
-    const matchedRuleIds = matched.map((r) => r.id);
+    /**
+     * 4) Produce deterministic outputs
+     */
+    const matchedRuleIds = matchedRules.map((rule) => rule.id);
 
-    // 3) Flatten actions in deterministic order
-    const actions: EvaluatedAction[] = matched.flatMap((rule) =>
-        (rule.actions ?? []).map((a) => ({
-            ...a,
+    const actions: EvaluatedAction[] = matchedRules.flatMap((rule) =>
+        (rule.actions ?? []).map((action) => ({
+            ...action,
             ruleId: rule.id,
         }))
     );
 
-    return { matchedRuleIds, actions };
+    return {
+        matchedRuleIds,
+        actions,
+    };
 }
