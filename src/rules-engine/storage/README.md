@@ -53,3 +53,5 @@ Add a small set of hardcoded or file-seeded rules for a known test repo:
 > Note: Webhook signature verification requires the GitHub App webhook
 > secret to be configured in both the GitHub App settings and the API
 > environment. Unsigned deliveries will be rejected with 401.
+> 
+> Note: Dev seed rules include a push rule to validate normalization + lookup.

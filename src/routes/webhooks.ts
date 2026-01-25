@@ -2,42 +2,67 @@ import express from "express";
 import crypto from "crypto";
 import { env } from "../config/env.js";
 
-export const githubWebhookRouter = express.Router();
+import type { RuleStore } from "../rules-engine/storage/ruleStore.js";
+import { normalizeWebhookEvent } from "../rules-engine/normalize/normalizeWebhookEvent.js";
+import { handleNormalizedEvent } from "../rules-engine/handleNormalizedEvent.js";
 
-/**
- * Capture raw body for signature verification
- */
-githubWebhookRouter.use(
-    express.json({
-        verify: (req: any, _res, buf) => {
-            req.rawBody = buf;
-        },
-    })
-);
+export function githubWebhookRouter(ruleStore: RuleStore): express.Router {
+    const router = express.Router();
 
-githubWebhookRouter.post("/", (req: any, res) => {
-    const signature = req.headers["x-hub-signature-256"] as string | undefined;
+    // Use raw to avoid the `verify` warning and to correctly validate signatures.
+    router.use(express.raw({ type: "application/json" }));
 
-    if (!signature) {
-        return res.status(401).send("Missing signature");
-    }
+    router.post("/", async (req: any, res) => {
+        const signature = req.get("x-hub-signature-256");
+        if (!signature) return res.status(401).send("Missing signature");
 
-    const hmac = crypto.createHmac("sha256", env.GITHUB_WEBHOOK_SECRET);
-    const digest = `sha256=${hmac.update(req.rawBody).digest("hex")}`;
+        const rawBody: Buffer = req.body;
+        if (!Buffer.isBuffer(rawBody)) {
+            return res.status(400).send("Expected raw body buffer");
+        }
 
-    if (
-        !crypto.timingSafeEqual(
-            Buffer.from(signature),
-            Buffer.from(digest)
-        )
-    ) {
-        return res.status(401).send("Invalid signature");
-    }
+        const hmac = crypto.createHmac("sha256", env.GITHUB_WEBHOOK_SECRET);
+        const digest = `sha256=${hmac.update(rawBody).digest("hex")}`;
 
-    const event = req.headers["x-github-event"];
-    const delivery = req.headers["x-github-delivery"];
+        const sigBuf = Buffer.from(signature);
+        const digBuf = Buffer.from(digest);
 
-    console.log("[webhook]", { event, delivery });
+        if (sigBuf.length !== digBuf.length) {
+            return res.status(401).send("Invalid signature");
+        }
+        if (!crypto.timingSafeEqual(sigBuf, digBuf)) {
+            return res.status(401).send("Invalid signature");
+        }
 
-    res.sendStatus(200);
-});
+        let payload: any;
+        try {
+            payload = JSON.parse(rawBody.toString("utf8"));
+        } catch {
+            return res.status(400).send("Invalid JSON payload");
+        }
+
+        const installationId: number | undefined = payload?.installation?.id;
+        if (!installationId) {
+            return res.status(400).send("Missing installation.id in payload");
+        }
+
+        const ctx = normalizeWebhookEvent({
+            headers: req.headers,
+            payload,
+        });
+
+        console.log("[normalized-event]", {
+            name: ctx.event.name,
+            repo: ctx.repository.fullName,
+            delivery: ctx.event.deliveryId,
+        });
+
+        // Engine entrypoint: consumes ONLY normalized context
+        await handleNormalizedEvent(ruleStore, { ctx, installationId });
+
+        return res.sendStatus(200);
+    });
+
+    return router;
+}
+

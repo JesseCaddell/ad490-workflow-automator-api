@@ -21,6 +21,7 @@ export class InMemoryRuleStore implements RuleStore {
         const k = makeRepoKey(key);
         const rules = this.repoRules.get(k) ?? [];
         return cloneRules(rules);
+
     }
 
     async getRulesForInstallation(installationId: number): Promise<Rule[]> {

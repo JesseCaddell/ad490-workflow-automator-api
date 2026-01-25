@@ -14,7 +14,7 @@ export interface SeedSpec {
  */
 export const DEFAULT_SEED_SPECS: SeedSpec[] = [
     {
-        owner: { installationId: 1058080469, repositoryId: 1140915493 }, // replace with your dev install/repo IDs
+        owner: { installationId: 105808469, repositoryId: 1140915493 }, // replace with your dev install/repo IDs
         rules: [
             {
                 id: "seed-pr-opened-wip-label",
@@ -53,6 +53,28 @@ export const DEFAULT_SEED_SPECS: SeedSpec[] = [
                     {
                         type: "setProjectStatus",
                         params: { status: "In Review" },
+                    },
+                ],
+                evaluation: { mode: "allMatches" },
+                metadata: { version: 1 },
+            },
+            {
+                id: "seed-push-any-branch",
+                name: "Log pushes (dev test)",
+                description: "Dev-only rule to validate push normalization + lookup",
+                enabled: true,
+                trigger: { event: "push" },
+                conditions: {
+                    type: "leaf",
+                    path: "ref",
+                    op: "exists",
+                },
+                actions: [
+                    {
+                        type: "addComment",
+                        params: {
+                            body: "Push detected (dev seed rule)",
+                        },
                     },
                 ],
                 evaluation: { mode: "allMatches" },
