@@ -1,6 +1,7 @@
 import type { RuleContext } from "./types.js";
 import type { RuleStore } from "./storage/ruleStore.js";
 import { evaluateRules } from "./evaluateRules.js";
+import { executeActionStubs } from "./actions/executeActionStubs.js";
 
 export interface HandleNormalizedEventInput {
     ctx: RuleContext;
@@ -14,6 +15,12 @@ export async function handleNormalizedEvent(
     const { matchedRuleIds, actions } = await evaluateRules(store, {
         ctx: input.ctx,
         installationId: input.installationId,
+    });
+
+    // Execute action stubs (log-only, safe for end-to-end tests)
+    const actionResults = await executeActionStubs({
+        ctx: input.ctx,
+        actions,
     });
 
     // Structured logs for debugging + demo visibility
@@ -36,12 +43,14 @@ export async function handleNormalizedEvent(
                     type: a.type,
                     paramKeys: a.params ? Object.keys(a.params) : [],
                 })),
+                actionResults,
             },
             null,
             2
         )
     );
 
-    // MVP stops here. Next issue: execute actions.
+    // TODO(real): Replace stubs with real GitHub execution (Octokit) once MVP demo is complete.
 }
+
 
