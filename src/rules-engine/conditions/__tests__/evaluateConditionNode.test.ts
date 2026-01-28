@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { evaluateConditionNode } from "./evaluateConditionNode.js";
-import type { ConditionNode, RuleContext } from "../types.js";
+import { evaluateConditionNode } from "../evaluateConditionNode.js";
+import type { ConditionNode, RuleContext } from "../../types.js";
 
 function makeCtx(): RuleContext {
     return {

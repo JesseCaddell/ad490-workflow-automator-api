@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { evaluateRules } from "./evaluateRules.js";
-import type { Rule, RuleContext } from "./types.js";
+import { evaluateRules } from "../evaluateRules.js";
+import type { Rule, RuleContext } from "../types.js";
 
 // Local minimal RuleStore double using the real interface shape.
 // If your RuleStore type is not exported from types.ts, import from its file instead.
