@@ -12,7 +12,7 @@ export function githubWebhookRouter(ruleStore: RuleStore): express.Router {
     // Use raw to avoid the `verify` warning and to correctly validate signatures.
     router.use(express.raw({ type: "application/json" }));
 
-    router.post("/", async (req: any, res) => {
+    router.post("/", (req: any, res) => {
         const signature = req.get("x-hub-signature-256");
         if (!signature) return res.status(401).send("Missing signature");
 
@@ -46,10 +46,24 @@ export function githubWebhookRouter(ruleStore: RuleStore): express.Router {
             return res.status(400).send("Missing installation.id in payload");
         }
 
-        const ctx = normalizeWebhookEvent({
-            headers: req.headers,
-            payload,
+        // Receipt log (before normalization)
+        console.log("[webhook] received", {
+            event: req.get("x-github-event"),
+            delivery: req.get("x-github-delivery"),
         });
+
+        let ctx;
+        try {
+            ctx = normalizeWebhookEvent({
+                headers: req.headers,
+                payload,
+            });
+        } catch (err: any) {
+            console.error("[webhook] normalize failed", {
+                message: err?.message ?? String(err),
+            });
+            return res.status(400).send("Normalization failed");
+        }
 
         console.log("[normalized-event]", {
             name: ctx.event.name,
@@ -57,11 +71,21 @@ export function githubWebhookRouter(ruleStore: RuleStore): express.Router {
             delivery: ctx.event.deliveryId,
         });
 
-        // Engine entrypoint: consumes ONLY normalized context
-        await handleNormalizedEvent(ruleStore, { ctx, installationId });
+        // Always return 200 on successful receipt; run engine asynchronously
+        res.sendStatus(200);
 
-        return res.sendStatus(200);
+        // Engine entrypoint: consumes ONLY normalized context
+        void handleNormalizedEvent(ruleStore, { ctx, installationId }).catch((err: any) => {
+            console.error("[rules-engine] error", {
+                message: err?.message ?? String(err),
+                installationId,
+                repo: ctx.repository.fullName,
+                event: ctx.event.name,
+                delivery: ctx.event.deliveryId,
+            });
+        });
     });
+
 
     return router;
 }
