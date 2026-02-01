@@ -1,6 +1,7 @@
 import express from "express";
 import { env } from "./config/env.js";
 import { githubWebhookRouter } from "./routes/webhooks.js";
+import {healthRouter} from "./routes/health.js";
 
 import { InMemoryRuleStore } from "./rules-engine/storage/inMemoryRuleStore.js";
 import { applySeedSpecs } from "./rules-engine/storage/seedRules.js";
@@ -22,6 +23,8 @@ await applySeedSpecs(ruleStore);
 
 // Mount webhook router with dependencies
 app.use("/webhooks/github", githubWebhookRouter(ruleStore));
+
+app.use("/health", healthRouter);
 
 // Simple health check
 app.get("/health", (_req, res) => {
