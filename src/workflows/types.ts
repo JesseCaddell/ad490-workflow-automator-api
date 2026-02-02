@@ -1,13 +1,13 @@
 // src/workflows/types.ts
 
-import type { Action, ActionType, RuleEventName, RuleContext } from "../rules-engine/types.js";
+import type { ActionType, RuleEventName, RuleContext } from "../rules-engine/types.js";
 
 export type WorkflowId = string;
 export type WorkflowStepId = string;
 
 export interface WorkflowScope {
     repositoryId: number;
-    installationId?: number;
+    installationId: number;
 }
 
 /**
