@@ -1,4 +1,4 @@
-import type { ConditionGroup, ConditionLeaf, ConditionNode, RuleContext } from "../coreTypes.js";
+import type { ConditionGroup, ConditionLeaf, ConditionNode, RuleContext } from "../ruleTypes.js";
 import { getValueAtPath } from "./getValueAtPath.js";
 import { applyOperator } from "./operators.js";
 

@@ -1,6 +1,6 @@
 // src/workflows/types.ts
 
-import type { ActionType, RuleEventName, RuleContext } from "../rules-engine/coreTypes.js";
+import type { ActionType, RuleEventName, RuleContext } from "../rules-engine/ruleTypes.js";
 
 export type WorkflowId = string;
 export type WorkflowStepId = string;

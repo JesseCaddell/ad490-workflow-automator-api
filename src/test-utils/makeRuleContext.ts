@@ -1,4 +1,4 @@
-import type { RuleContext, RuleEventName } from "../rules-engine/coreTypes.js";
+import type { RuleContext, RuleEventName } from "../rules-engine/ruleTypes.js";
 
 export function makeRuleContext(overrides?: Partial<RuleContext>): RuleContext {
     return {

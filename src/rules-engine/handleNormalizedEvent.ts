@@ -1,4 +1,4 @@
-import type { RuleContext } from "./coreTypes.js";
+import type { RuleContext } from "./ruleTypes.js";
 import type { RuleStore } from "./storage/ruleStore.js";
 import { evaluateRules } from "./evaluateRules.js";
 import { executeActionStubs } from "./actions/executeActionStubs.js";

@@ -1,4 +1,4 @@
-import type { Rule } from "../coreTypes.js";
+import type { Rule } from "../ruleTypes.js";
 import type { RuleOwnerKey, RuleStore } from "./ruleStore.js";
 
 function makeRepoKey(key: RuleOwnerKey): string {

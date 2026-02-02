@@ -1,4 +1,4 @@
-import type { RuleContext } from "../coreTypes.js";
+import type { RuleContext } from "../ruleTypes.js";
 import type { ActionStubResult, EvaluatedActionInput } from "./actionTypes.js";
 import { addLabelStub } from "./addLabel.stub.js";
 import { addCommentStub } from "./addComment.stub.js";

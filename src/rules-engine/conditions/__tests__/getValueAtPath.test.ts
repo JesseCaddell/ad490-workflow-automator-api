@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { getValueAtPath } from "../getValueAtPath.js";
-import type { RuleContext } from "../../coreTypes.js";
+import type { RuleContext } from "../../ruleTypes.js";
 import { makeRuleContext } from "../../../test-utils/makeRuleContext.js";
 
 function makeCtx(): RuleContext {

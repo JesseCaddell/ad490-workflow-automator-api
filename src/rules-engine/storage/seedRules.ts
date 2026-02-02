@@ -1,6 +1,6 @@
 // src/rules-engine/storage/seedRules.ts
 
-import type { Rule } from "../coreTypes.js";
+import type { Rule } from "../ruleTypes.js";
 import type { RuleOwnerKey, RuleStore } from "./ruleStore.js";
 
 export interface SeedSpec {

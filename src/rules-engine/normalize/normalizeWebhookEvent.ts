@@ -1,4 +1,4 @@
-import type { RuleContext, RuleEventName } from "../coreTypes.js";
+import type { RuleContext, RuleEventName } from "../ruleTypes.js";
 
 type GithubWebhookHeaders = Record<string, string | string[] | undefined>;
 

@@ -1,4 +1,4 @@
-import type { Rule } from "../coreTypes.js";
+import type { Rule } from "../ruleTypes.js";
 
 export interface RuleOwnerKey {
     installationId: number;

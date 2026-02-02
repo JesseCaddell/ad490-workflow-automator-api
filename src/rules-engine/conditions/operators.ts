@@ -1,4 +1,4 @@
-import type { ConditionLeaf } from "../coreTypes.js";
+import type { ConditionLeaf } from "../ruleTypes.js";
 
 function isPrimitive(v: unknown): v is string | number | boolean | null {
     return (
@@ -44,7 +44,7 @@ export function applyOperator(
         }
 
         case "equals": {
-            // MVP: expected is primitive or array of primitives per coreTypes.ts
+            // MVP: expected is primitive or array of primitives per ruleTypes.ts
             if (Array.isArray(expected) && Array.isArray(actual)) {
                 if (expected.length !== actual.length) return false;
                 return expected.every((v, i) => actual[i] === v);
