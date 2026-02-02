@@ -1,3 +1,5 @@
+//rules-engine/actions\types.ts
+
 import type { Action, ActionType, RuleContext, RuleId } from "../types.js";
 
 export interface EvaluatedActionInput extends Action {

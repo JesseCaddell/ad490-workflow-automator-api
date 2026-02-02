@@ -1,3 +1,5 @@
+//rules-engine/types.ts
+
 export type RuleId = string;
 
 export type RuleEvaluationMode = "firstMatch" | "allMatches";
@@ -85,6 +87,7 @@ export interface Rule {
 }
 
 export interface RuleContext {
+    installationId: number;
     event: {
         name: RuleEventName;
         deliveryId?: string;
