@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { evaluateRules } from "../evaluateRules.js";
-import type { Rule, RuleContext } from "../types.js";
+import type { Rule, RuleContext } from "../ruleTypes.js";
 import { makeRuleContext } from "../../test-utils/makeRuleContext.js";
 
 // Local minimal RuleStore double using the real interface shape.

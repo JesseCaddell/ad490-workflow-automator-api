@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { validateWorkflow } from "../validateWorkflow.js";
-import type { Workflow } from "../types.js";
+import type { Workflow } from "../workflowTypes.js";
 
 test("validateWorkflow: fixture is valid", () => {
     const fixturePath = path.resolve(

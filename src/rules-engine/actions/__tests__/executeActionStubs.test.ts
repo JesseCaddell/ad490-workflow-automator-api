@@ -4,8 +4,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { executeActionStubs } from "../executeActionStubs.js";
-import type { RuleContext, ActionType } from "../../types.js";
-import type { ActionStubResult, EvaluatedActionInput } from "../types.js";
+import type { RuleContext, ActionType } from "../../ruleTypes.js";
+import type { ActionStubResult, EvaluatedActionInput } from "../actionTypes.js";
 
 function makeCtx(): RuleContext {
     // Minimal mock; keep it aligned with RuleContext fields used by the engine.

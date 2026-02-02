@@ -1,5 +1,5 @@
 // src/workflows/validateWorkflow.ts
-import type { Workflow } from "./types.js";
+import type { Workflow } from "./workflowTypes.js";
 
 export function validateWorkflow(wf: Workflow): string[] {
     const errors: string[] = [];

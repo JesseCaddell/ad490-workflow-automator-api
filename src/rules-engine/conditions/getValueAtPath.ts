@@ -1,4 +1,4 @@
-import type { RuleContext } from "../types.js";
+import type { RuleContext } from "../ruleTypes.js";
 
 type AnyRecord = Record<string, unknown>;
 

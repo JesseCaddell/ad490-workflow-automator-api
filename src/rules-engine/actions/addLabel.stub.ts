@@ -1,4 +1,4 @@
-import type { ActionHandler } from "./types.js";
+import type { ActionHandler } from "./actionTypes.js";
 import { logActionStub } from "./logging.js";
 
 export const addLabelStub: ActionHandler = async ({ action }) => {
