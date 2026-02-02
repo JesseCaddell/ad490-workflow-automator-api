@@ -1,4 +1,4 @@
-// src/workflows/types.ts
+// src/workflows/workflowTypes.ts
 
 import type { ActionType, RuleEventName, RuleContext } from "../rules-engine/ruleTypes.js";
 
