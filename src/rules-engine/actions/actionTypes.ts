@@ -1,4 +1,4 @@
-//rules-engine/actions\types.ts
+//rules-engine/actions\actionTypes.ts
 
 import type { Action, ActionType, RuleContext, RuleId } from "../types.js";
 
