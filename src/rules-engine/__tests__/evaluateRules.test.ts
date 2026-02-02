@@ -2,15 +2,15 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { evaluateRules } from "../evaluateRules.js";
 import type { Rule, RuleContext } from "../types.js";
+import { makeRuleContext } from "../../test-utils/makeRuleContext.js";
 
 // Local minimal RuleStore double using the real interface shape.
-// If your RuleStore type is not exported from types.ts, import from its file instead.
 type Store = {
     getRulesForRepo(args: { installationId: number; repositoryId: number }): Promise<Rule[]>;
 };
 
 function makeCtx(eventName: string): RuleContext {
-    return {
+    return makeRuleContext({
         event: {
             name: eventName as any,
             deliveryId: "deliv_123",
@@ -29,7 +29,7 @@ function makeCtx(eventName: string): RuleContext {
                 labels: ["bug"],
             },
         },
-    };
+    });
 }
 
 function storeWith(rules: Rule[]): Store {
@@ -73,10 +73,7 @@ test("evaluateRules: deterministic ordering by priority desc then id asc", async
         } as any,
     ];
 
-    const res = await evaluateRules(storeWith(rules) as any, {
-        ctx,
-        installationId: 1,
-    });
+    const res = await evaluateRules(storeWith(rules) as any, { ctx });
 
     // priority 10 rules first, tie-break by id asc => a then c, then b
     assert.deepEqual(res.matchedRuleIds.map(String), ["a", "c", "b"]);
@@ -108,13 +105,9 @@ test("evaluateRules: firstMatch stops after first matched rule", async () => {
         } as any,
     ];
 
-    const res = await evaluateRules(storeWith(rules) as any, {
-        ctx,
-        installationId: 1,
-    });
+    const res = await evaluateRules(storeWith(rules) as any, { ctx });
 
     assert.deepEqual(res.matchedRuleIds.map(String), ["a"]);
-    assert.equal(res.actions.length, 1);
     assert.equal(res.actions.length, 1);
     assert.equal(String(res.actions[0]!.ruleId), "a");
 });
@@ -141,10 +134,7 @@ test("evaluateRules: ignores disabled rules and non-matching triggers", async ()
         } as any,
     ];
 
-    const res = await evaluateRules(storeWith(rules) as any, {
-        ctx,
-        installationId: 1,
-    });
+    const res = await evaluateRules(storeWith(rules) as any, { ctx });
 
     assert.deepEqual(res.matchedRuleIds, []);
     assert.deepEqual(res.actions, []);

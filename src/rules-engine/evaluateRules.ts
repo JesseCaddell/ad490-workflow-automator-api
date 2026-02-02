@@ -14,7 +14,6 @@ export interface EvaluatedAction extends Action {
 
 export interface EvaluateRulesInput {
     ctx: RuleContext;
-    installationId: number;
 }
 
 export interface EvaluateRulesResult {
@@ -36,7 +35,7 @@ export async function evaluateRules(
     input: EvaluateRulesInput
 ): Promise<EvaluateRulesResult> {
     const rules = await store.getRulesForRepo({
-        installationId: input.installationId,
+        installationId: input.ctx.installationId,
         repositoryId: input.ctx.repository.id,
     });
 
@@ -45,7 +44,7 @@ export async function evaluateRules(
      */
     const eligibleRules = rules.filter(
         (rule) =>
-            rule.enabled === true &&
+            rule.enabled &&
             rule.trigger?.event === input.ctx.event.name
     );
 

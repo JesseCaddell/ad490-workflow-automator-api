@@ -2,21 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { getValueAtPath } from "../getValueAtPath.js";
 import type { RuleContext } from "../../types.js";
+import { makeRuleContext } from "../../../test-utils/makeRuleContext.js";
 
 function makeCtx(): RuleContext {
-    return {
-        event: {
-            name: "pull_request.opened" as any,
-            deliveryId: "deliv_123",
-            receivedAt: new Date().toISOString(),
-        },
-        repository: {
-            id: 1,
-            owner: "octo",
-            name: "repo",
-            fullName: "octo/repo",
-        },
-        actor: { id: 99, login: "me" },
+    return makeRuleContext({
         data: {
             pullRequest: {
                 base: { ref: "main" },
@@ -24,7 +13,7 @@ function makeCtx(): RuleContext {
             },
             number: 123,
         },
-    };
+    }) as unknown as RuleContext;
 }
 
 test("getValueAtPath: empty path returns undefined", () => {

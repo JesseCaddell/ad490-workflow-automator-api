@@ -1,0 +1,30 @@
+{
+  "id": "wf_seed_pr_opened_label",
+  "name": "PR opened: add WIP label",
+  "description": "Demo workflow for MVP",
+  "enabled": true,
+  "scope": {
+    "installationId": 105808469,
+    "repositoryId": 1140915493
+  },
+  "trigger": {
+    "event": "pull_request.opened"
+  },
+  "steps": [
+    {
+      "id": "step_add_label",
+      "name": "Add label: WIP",
+      "action": {
+        "type": "addLabel",
+        "params": {
+          "label": "WIP"
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "createdAt": "2026-02-01T23:30:00.000Z",
+    "createdBy": "seed"
+  }
+}
+

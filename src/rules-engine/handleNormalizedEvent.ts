@@ -5,7 +5,6 @@ import { executeActionStubs } from "./actions/executeActionStubs.js";
 
 export interface HandleNormalizedEventInput {
     ctx: RuleContext;
-    installationId: number;
 }
 
 export async function handleNormalizedEvent(
@@ -13,8 +12,7 @@ export async function handleNormalizedEvent(
     input: HandleNormalizedEventInput
 ): Promise<void> {
     const { matchedRuleIds, actions } = await evaluateRules(store, {
-        ctx: input.ctx,
-        installationId: input.installationId,
+        ctx: input.ctx
     });
 
     // Execute action stubs (log-only, safe for end-to-end tests)
@@ -28,7 +26,7 @@ export async function handleNormalizedEvent(
         "[rules-engine] evaluation",
         JSON.stringify(
             {
-                installationId: input.installationId,
+                installationId: input.ctx.installationId,
                 event: {
                     name: input.ctx.event.name,
                     id: input.ctx.event.deliveryId,
