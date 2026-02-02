@@ -4,7 +4,7 @@ import type {
     RuleContext,
     RuleId,
     RuleEvaluationMode,
-} from "./types.js";
+} from "./coreTypes.js";
 import type { RuleStore } from "./storage/ruleStore.js";
 import { evaluateConditionNode } from "./conditions/evaluateConditionNode.js";
 

@@ -1,4 +1,4 @@
-//rules-engine/types.ts
+//rules-engine/coreTypes.ts
 
 export type RuleId = string;
 

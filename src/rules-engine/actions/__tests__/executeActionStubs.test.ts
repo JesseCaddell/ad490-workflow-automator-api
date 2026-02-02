@@ -4,7 +4,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { executeActionStubs } from "../executeActionStubs.js";
-import type { RuleContext, ActionType } from "../../types.js";
+import type { RuleContext, ActionType } from "../../coreTypes.js";
 import type { ActionStubResult, EvaluatedActionInput } from "../actionTypes.js";
 
 function makeCtx(): RuleContext {

@@ -39,7 +39,7 @@ All normalization outputs conform to:
 - `RuleContext`
 - `RuleEventName`
 
-Defined in `src/rules-engine/types.ts`.
+Defined in `src/rules-engine/coreTypes.ts`.
 
 ### Core fields provided
 - `event.name` (normalized event name)
