@@ -15,6 +15,11 @@ interface NormalizeInput {
 export function normalizeWebhookEvent(input: NormalizeInput): RuleContext {
     const receivedAt = input.receivedAtIso ?? new Date().toISOString();
 
+    const installationId: number | undefined = input.payload?.installation?.id;
+    if (!installationId) {
+        throw new Error("normalizeWebhookEvent: missing installation.id in payload");
+    }
+
     const event = readHeader(input.headers, "x-github-event");
     const action = input.payload?.action as string | undefined;
 
@@ -52,6 +57,7 @@ export function normalizeWebhookEvent(input: NormalizeInput): RuleContext {
     const deliveryId = readHeader(input.headers, "x-github-delivery");
 
     return {
+        installationId,
         event: {
             name: eventName,
             receivedAt,

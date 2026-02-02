@@ -41,11 +41,6 @@ export function githubWebhookRouter(ruleStore: RuleStore): express.Router {
             return res.status(400).send("Invalid JSON payload");
         }
 
-        const installationId: number | undefined = payload?.installation?.id;
-        if (!installationId) {
-            return res.status(400).send("Missing installation.id in payload");
-        }
-
         // Receipt log (before normalization)
         console.log("[webhook] received", {
             event: req.get("x-github-event"),
@@ -69,23 +64,29 @@ export function githubWebhookRouter(ruleStore: RuleStore): express.Router {
             name: ctx.event.name,
             repo: ctx.repository.fullName,
             delivery: ctx.event.deliveryId,
+            installationId: ctx.installationId,
         });
 
         // Always return 200 on successful receipt; run engine asynchronously
         res.sendStatus(200);
 
-        // Engine entrypoint: consumes ONLY normalized context
-        void handleNormalizedEvent(ruleStore, { ctx, installationId }).catch((err: any) => {
+        /**
+         * Engine entrypoint: consumes ONLY normalized context.
+         *
+         * NOTE: This expects handleNormalizedEvent signature to be:
+         *   handleNormalizedEvent(ruleStore, { ctx })
+         * (and for it to use ctx.installationId internally).
+         */
+        void handleNormalizedEvent(ruleStore, { ctx }).catch((err: any) => {
             console.error("[rules-engine] error", {
                 message: err?.message ?? String(err),
-                installationId,
+                installationId: ctx.installationId,
                 repo: ctx.repository.fullName,
                 event: ctx.event.name,
                 delivery: ctx.event.deliveryId,
             });
         });
     });
-
 
     return router;
 }
