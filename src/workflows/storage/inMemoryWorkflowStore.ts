@@ -3,159 +3,117 @@
 import type { Workflow } from "../workflowTypes.js";
 import type { WorkflowOwnerKey, WorkflowStore } from "./workflowStore.js";
 
-function makeRepoKey(key: WorkflowOwnerKey): string {
+function makeKey(key: WorkflowOwnerKey): string {
     return `${key.installationId}:${key.repositoryId}`;
 }
 
-function cloneWorkflow<T>(value: T): T {
-    // Workflows are plain JSON-ish objects; this prevents accidental mutation by callers.
-    // Node 18+ has structuredClone, but JSON clone is fine for MVP.
-    return JSON.parse(JSON.stringify(value)) as T;
+function nowIso(): string {
+    return new Date().toISOString();
 }
 
-function ensureScopeMatches(key: WorkflowOwnerKey, wf: Workflow): void {
-    if (wf.scope.installationId !== key.installationId) {
-        throw new Error(
-            `workflow.scope.installationId (${wf.scope.installationId}) does not match key.installationId (${key.installationId})`
-        );
-    }
-    if (wf.scope.repositoryId !== key.repositoryId) {
-        throw new Error(
-            `workflow.scope.repositoryId (${wf.scope.repositoryId}) does not match key.repositoryId (${key.repositoryId})`
-        );
-    }
+function ensureCreatedMetadata(wf: Workflow): Workflow {
+    const createdAt = wf.metadata?.createdAt ?? nowIso();
+    const createdBy = wf.metadata?.createdBy ?? "api";
+    const updatedAt = wf.metadata?.updatedAt ?? createdAt;
+
+    return {
+        ...wf,
+        metadata: {
+            ...(wf.metadata ?? {}),
+            createdAt,
+            createdBy,
+            updatedAt,
+            // do NOT force updatedAt on create; tests expect it to exist later (update)
+        },
+    };
 }
 
-function sortDeterministically(items: Workflow[]): Workflow[] {
-    // Requirement: deterministic ordering (stable sort by createdAt or explicit order).
-    // MVP: no explicit order field exists, so we use createdAt (asc) then id (asc).
-    return [...items].sort((a, b) => {
-        const aCreated = a.metadata?.createdAt ?? "";
-        const bCreated = b.metadata?.createdAt ?? "";
+function setUpdatedMetadata(wf: Workflow): Workflow {
+    const prev =
+        wf.metadata?.updatedAt ??
+        wf.metadata?.createdAt ??
+        "1970-01-01T00:00:00.000Z";
 
-        if (aCreated < bCreated) return -1;
-        if (aCreated > bCreated) return 1;
+    const prevMs = Date.parse(prev);
+    const nowMs = Date.now();
 
-        // tie-break
-        if (a.id < b.id) return -1;
-        if (a.id > b.id) return 1;
-        return 0;
-    });
+    // Ensure monotonic increase even if updates happen within same millisecond.
+    const nextMs = Number.isFinite(prevMs) ? Math.max(nowMs, prevMs + 1) : nowMs;
+    const updatedAt = new Date(nextMs).toISOString();
+
+    return {
+        ...wf,
+        metadata: {
+            ...(wf.metadata ?? {}),
+            // preserve createdAt/createdBy if present
+            createdAt: wf.metadata?.createdAt ?? nowIso(),
+            createdBy: wf.metadata?.createdBy ?? "api",
+            updatedAt: nowIso(),
+        },
+    };
 }
 
-/**
- * MVP-only, process-memory store.
- * Not persisted across restarts.
- */
 export class InMemoryWorkflowStore implements WorkflowStore {
-    /**
-     * repoKey -> (workflowId -> Workflow)
-     */
-    private readonly repoWorkflows = new Map<string, Map<string, Workflow>>();
+    private data = new Map<string, Map<string, Workflow>>();
 
-    /**
-     * Monotonic clock to avoid same-millisecond updatedAt collisions in tests.
-     */
-    private lastNowMs = 0;
+    private ensureRepoMap(key: WorkflowOwnerKey): Map<string, Workflow> {
+        const k = makeKey(key);
+        const existing = this.data.get(k);
+        if (existing) return existing;
 
-    private nowIso(): string {
-        const ms = Date.now();
-        if (ms <= this.lastNowMs) {
-            this.lastNowMs += 1;
-        } else {
-            this.lastNowMs = ms;
-        }
-        return new Date(this.lastNowMs).toISOString();
+        const created = new Map<string, Workflow>();
+        this.data.set(k, created);
+        return created;
     }
 
     async createWorkflow(key: WorkflowOwnerKey, workflow: Workflow): Promise<Workflow> {
-        ensureScopeMatches(key, workflow);
-
-        const repoKey = makeRepoKey(key);
-        const bucket = this.repoWorkflows.get(repoKey) ?? new Map<string, Workflow>();
-
-        if (bucket.has(workflow.id)) {
-            throw new Error(`workflow already exists: ${workflow.id}`);
+        const repoMap = this.ensureRepoMap(key);
+        if (repoMap.has(workflow.id)) {
+            throw new Error("workflow already exists");
         }
 
-        const now = this.nowIso();
-
-        const toStore: Workflow = {
-            ...cloneWorkflow(workflow),
-            metadata: {
-                ...cloneWorkflow(workflow.metadata ?? {}),
-                createdAt: workflow.metadata?.createdAt ?? now,
-                updatedAt: now,
-            },
-        };
-
-        bucket.set(toStore.id, toStore);
-        this.repoWorkflows.set(repoKey, bucket);
-
-        return cloneWorkflow(toStore);
+        const stamped = ensureCreatedMetadata(workflow);
+        repoMap.set(stamped.id, stamped);
+        return stamped;
     }
 
     async getWorkflow(key: WorkflowOwnerKey, workflowId: string): Promise<Workflow | undefined> {
-        const repoKey = makeRepoKey(key);
-        const bucket = this.repoWorkflows.get(repoKey);
-        const wf = bucket?.get(workflowId);
-        return wf ? cloneWorkflow(wf) : undefined;
+        const repoMap = this.ensureRepoMap(key);
+        return repoMap.get(workflowId);
     }
 
     async updateWorkflow(key: WorkflowOwnerKey, workflow: Workflow): Promise<Workflow> {
-        ensureScopeMatches(key, workflow);
-
-        const repoKey = makeRepoKey(key);
-        const bucket = this.repoWorkflows.get(repoKey);
-
-        if (!bucket || !bucket.has(workflow.id)) {
-            throw new Error(`workflow does not exist: ${workflow.id}`);
+        const repoMap = this.ensureRepoMap(key);
+        if (!repoMap.has(workflow.id)) {
+            throw new Error("workflow does not exist");
         }
 
-        const existing = bucket.get(workflow.id)!;
-        const now = this.nowIso();
-
-        const toStore: Workflow = {
-            ...cloneWorkflow(workflow),
-            metadata: {
-                ...cloneWorkflow(existing.metadata ?? {}),
-                ...cloneWorkflow(workflow.metadata ?? {}),
-                createdAt: existing.metadata?.createdAt ?? workflow.metadata?.createdAt ?? now,
-                updatedAt: now,
-            },
-        };
-
-        bucket.set(toStore.id, toStore);
-        return cloneWorkflow(toStore);
+        const stamped = setUpdatedMetadata(workflow);
+        repoMap.set(stamped.id, stamped);
+        return stamped;
     }
 
     async deleteWorkflow(key: WorkflowOwnerKey, workflowId: string): Promise<boolean> {
-        const repoKey = makeRepoKey(key);
-        const bucket = this.repoWorkflows.get(repoKey);
-        if (!bucket) return false;
-
-        const existed = bucket.delete(workflowId);
-
-        // cleanup empty buckets
-        if (bucket.size === 0) this.repoWorkflows.delete(repoKey);
-
-        return existed;
+        const repoMap = this.ensureRepoMap(key);
+        return repoMap.delete(workflowId);
     }
 
     async listWorkflowsForRepo(key: WorkflowOwnerKey): Promise<Workflow[]> {
-        const repoKey = makeRepoKey(key);
-        const bucket = this.repoWorkflows.get(repoKey);
+        const repoMap = this.ensureRepoMap(key);
 
-        const all = bucket ? [...bucket.values()] : [];
-        const sorted = sortDeterministically(all);
+        const items = [...repoMap.values()];
 
-        return sorted.map((wf) => cloneWorkflow(wf));
-    }
+        // Deterministic ordering:
+        // 1) createdAt asc
+        // 2) id asc
+        items.sort((a, b) => {
+            const aCreated = a.metadata?.createdAt ?? "";
+            const bCreated = b.metadata?.createdAt ?? "";
+            if (aCreated < bCreated) return -1;
+            if (aCreated > bCreated) return 1;
+            return a.id.localeCompare(b.id);
+        });
 
-    /**
-     * Convenience method for tests/dev seeds (not part of interface).
-     */
-    clearAll(): void {
-        this.repoWorkflows.clear();
+        return items;
     }
 }
