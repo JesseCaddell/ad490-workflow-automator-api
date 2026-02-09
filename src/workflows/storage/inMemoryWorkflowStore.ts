@@ -48,7 +48,7 @@ function setUpdatedMetadata(wf: Workflow): Workflow {
             // preserve createdAt/createdBy if present
             createdAt: wf.metadata?.createdAt ?? nowIso(),
             createdBy: wf.metadata?.createdBy ?? "api",
-            updatedAt: nowIso(),
+            updatedAt,
         },
     };
 }
