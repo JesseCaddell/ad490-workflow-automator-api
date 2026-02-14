@@ -13,7 +13,7 @@ function notImplementedStub(input: {
         ok: false,
         actionType: input.action.type,
         ruleId: input.action.ruleId,
-        error: `Stub handler not implemented yet for action type: ${input.action.type}`,
+        error: `No stub handler implemented for action type: ${input.action.type}`,
     };
 }
 
