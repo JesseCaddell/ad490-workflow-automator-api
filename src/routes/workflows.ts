@@ -1,5 +1,9 @@
+// src/routes/workflows.ts
+
 import express from "express";
 import crypto from "crypto";
+import { validateWorkflow, type ValidationError } from "../workflows/validateWorkflow.js";
+
 
 import type { Workflow } from "../workflows/workflowTypes.js";
 import type {
@@ -22,10 +26,15 @@ function fail(
     res: express.Response,
     code: ApiErrorCode,
     message: string,
-    status: number
+    status: number,
+    details?: ValidationError[]
 ) {
-    return res.status(status).json({ ok: false, error: { code, message } });
+    return res.status(status).json({
+        ok: false,
+        error: { code, message, ...(details ? { details } : {}) },
+    });
 }
+
 
 /**
  * MVP scope resolution:
@@ -187,6 +196,11 @@ export function workflowsRouter(
                 : {}),
         };
 
+        const errors = validateWorkflow(workflow);
+        if (errors.length > 0) {
+            return fail(res, "BAD_REQUEST", "Invalid workflow payload.", 400, errors);
+        }
+
         try {
             const created = await workflowStore.createWorkflow(scope.key, workflow);
             return ok(res, created, 201);
@@ -247,6 +261,10 @@ export function workflowsRouter(
             },
         };
 
+        const errors = validateWorkflow(updated);
+        if (errors.length > 0) {
+            return fail(res, "BAD_REQUEST", "Invalid workflow payload.", 400, errors);
+        }
 
 
         const saved = await workflowStore.updateWorkflow(scope.key, updated);

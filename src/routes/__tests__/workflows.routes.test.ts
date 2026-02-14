@@ -1,3 +1,5 @@
+// src/routes/__tests__/workflows.routes.test.ts
+
 import test from "node:test";
 import assert from "node:assert/strict";
 import express from "express";
@@ -27,6 +29,23 @@ function scopeHeaders(installationId: number, repositoryId: number) {
     };
 }
 
+function validWorkflowPayload(overrides?: Record<string, unknown>) {
+    return {
+        name: "My Workflow",
+        description: "Test workflow",
+        enabled: true,
+        trigger: { event: "issue.opened" },
+        steps: [
+            {
+                id: "s1",
+                name: "Add triage label",
+                action: { type: "addLabel", params: { label: "triage" } },
+            },
+        ],
+        ...(overrides ?? {}),
+    };
+}
+
 test("GET /api/workflows requires scope headers", async () => {
     const { server, baseUrl } = makeServer();
     try {
@@ -50,13 +69,7 @@ test("CRUD happy path", async () => {
         const createRes = await fetch(`${baseUrl}/api/workflows`, {
             method: "POST",
             headers,
-            body: JSON.stringify({
-                name: "My Workflow",
-                description: "Test workflow",
-                enabled: true,
-                trigger: { event: "push" },
-                steps: [],
-            }),
+            body: JSON.stringify(validWorkflowPayload()),
         });
         assert.equal(createRes.status, 201);
 
@@ -136,11 +149,11 @@ test("repo scope isolation: workflow not visible across different repositoryId",
         const createRes = await fetch(`${baseUrl}/api/workflows`, {
             method: "POST",
             headers: headersA,
-            body: JSON.stringify({
-                name: "Repo A Workflow",
-                trigger: { event: "push" },
-                steps: [],
-            }),
+            body: JSON.stringify(
+                validWorkflowPayload({
+                    name: "Repo A Workflow",
+                })
+            ),
         });
         assert.equal(createRes.status, 201);
 
@@ -153,6 +166,69 @@ test("repo scope isolation: workflow not visible across different repositoryId",
             headers: headersB,
         });
         assert.equal(getOtherRepo.status, 404);
+    } finally {
+        server.close();
+    }
+});
+
+test("POST /api/workflows rejects push workflow trigger (demo-only)", async () => {
+    const { server, baseUrl } = makeServer();
+    try {
+        const headers = scopeHeaders(1, 2);
+
+        const res = await fetch(`${baseUrl}/api/workflows`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify(
+                validWorkflowPayload({
+                    name: "Invalid Push Workflow",
+                    trigger: { event: "push" },
+                })
+            ),
+        });
+
+        assert.equal(res.status, 400);
+
+        const json: any = await res.json();
+        assert.equal(json.ok, false);
+        assert.equal(json.error.code, "BAD_REQUEST");
+        assert.equal(json.error.message, "Invalid workflow payload.");
+
+        assert.ok(Array.isArray(json.error.details));
+        assert.ok(
+            json.error.details.some(
+                (e: any) => e.path === "trigger.event" && String(e.message).includes("push")
+            )
+        );
+    } finally {
+        server.close();
+    }
+});
+
+test("POST /api/workflows rejects empty steps", async () => {
+    const { server, baseUrl } = makeServer();
+    try {
+        const headers = scopeHeaders(1, 2);
+
+        const res = await fetch(`${baseUrl}/api/workflows`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify(
+                validWorkflowPayload({
+                    name: "Invalid Steps Workflow",
+                    steps: [],
+                })
+            ),
+        });
+
+        assert.equal(res.status, 400);
+
+        const json: any = await res.json();
+        assert.equal(json.ok, false);
+        assert.equal(json.error.code, "BAD_REQUEST");
+
+        assert.ok(Array.isArray(json.error.details));
+        assert.ok(json.error.details.some((e: any) => e.path === "steps"));
     } finally {
         server.close();
     }

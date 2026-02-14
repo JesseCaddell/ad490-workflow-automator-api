@@ -1,0 +1,15 @@
+{
+  "id": "wf_test_1",
+  "name": "Issue Opened -> Add Label",
+  "enabled": true,
+  "scope": { "installationId": 1, "repositoryId": 2 },
+  "trigger": { "event": "issue.opened" },
+  "steps": [
+    {
+      "id": "s1",
+      "name": "Add triage label",
+      "action": { "type": "addLabel", "params": { "label": "triage" } }
+    }
+  ],
+  "metadata": { "createdBy": "seed" }
+}

@@ -1,3 +1,5 @@
+// src/workflows/__tests__/validateWorkflow.test.ts
+
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -9,7 +11,7 @@ import type { Workflow } from "../workflowTypes.js";
 test("validateWorkflow: fixture is valid", () => {
     const fixturePath = path.resolve(
         process.cwd(),
-        "src/workflows/__tests__/fixtures/workflow.push.addLabel.json"
+        "src/workflows/__tests__/fixtures/workflow.issue.opened.addLabel.json"
     );
 
     const raw = fs.readFileSync(fixturePath, "utf8");
