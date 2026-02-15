@@ -3,146 +3,178 @@
 > 📘 Part of the **AD490 Capstone Project**  
 > Project hub / documentation: https://github.com/JesseCaddell/AD490-Capstone
 
-This repository contains the **backend API** and **GitHub App integration** for the GitHub Workflow Automation SaaS.
+This repository contains the **backend API** and **GitHub App integration layer** for the AD490 Workflow Automator.
 
-The API is responsible for:
-- Handling GitHub App installation metadata
-- Receiving and validating GitHub webhooks
-- Evaluating automation rules and executing actions (labels, reviewers, comments, etc.)
-- Generating GitHub Actions YAML from structured templates and committing workflow files to repos
-- Persisting configuration and execution logs in a database
+## Current MVP Capabilities
 
-## Scope (MVP)
-- GitHub App webhook receiver + signature validation
-- Repo discovery for a GitHub App installation
-- Rules engine:
-  - Trigger: `pull_request.opened` (initial)
-  - Actions: add label, request reviewers, post comment
-- Workflow generation:
-  - Template-based JSON → YAML
-  - Commit `.github/workflows/*.yml` via GitHub API
-- Basic audit/execution logs
+- GitHub App webhook receiver + signature verification
+- Normalization layer
+- Deterministic rules engine (stub actions)
+- Workflow Builder MVP (sequential execution, repo-scoped)
+- Structured execution logging
 
-## Tech Stack (planned)
-- Node.js (TypeScript)
-- Octokit (GitHub API + webhooks)
-- Postgres (Supabase / Neon / etc.)
-- Hosted on Render / Fly.io / DigitalOcean (TBD)
+## Planned (Future Milestones)
 
-## Local Development
+- JSON → YAML workflow generation
+- Commit workflow files via GitHub API
+- Octokit-backed real action execution
+- Persistent database storage
+- Audit log persistence
 
-### Start the API server
+---
 
-```<bash>
+# MVP Scope (Current Implementation)
+
+The current MVP includes:
+
+- GitHub webhook receiver (`/webhooks/github`)
+- Signature verification
+- Normalization layer → `RuleContext`
+- Rules engine (deterministic evaluation)
+- Workflow Builder API:
+  - Repository-scoped workflows
+  - Single-trigger workflows
+  - Sequential step execution
+  - Stub action execution (no live GitHub mutations)
+- In-memory storage adapter (replaceable)
+
+The MVP prioritizes:
+
+- Determinism
+- Strict scoping
+- Clean architectural boundaries
+- Safe demo execution
+- Test coverage across engine + workflow layers
+
+---
+
+# Documentation
+
+All architectural and behavioral contracts are documented in `/docs`.
+
+See:
+
+- `docs/architecture.md`
+- `docs/api-contract.md`
+- `docs/workflow-builder-mvp.md`
+- `docs/rules-engine.md`
+- `docs/normalization.md`
+- `docs/storage.md`
+
+These documents define:
+
+- System architecture boundaries
+- Workflow shape + constraints
+- Supported trigger events
+- Supported actions (stub vs real)
+- Deterministic execution model
+- Error behavior
+- Explicit MVP limitations
+
+---
+
+# Tech Stack (Current)
+
+- Node.js
+- TypeScript
+- Express
+- Native Node test runner
+- In-memory storage adapter (MVP)
+
+Future milestones may introduce:
+
+- Octokit (live GitHub mutations)
+- Persistent database storage
+- Authentication / RBAC
+- Real workflow orchestration
+
+---
+
+# Local Development
+
+## Start the API server
+
+```bash
 npm install
 npm run dev
 ```
 
-The server runs on:
+Server default:
 
-```<text>
-http://localhost:3000
+```
+http://localhost:3001
 ```
 
 Health check:
 
-```<bash>
-curl http://localhost:3000/health
+```bash
+curl http://localhost:3001/health
 ```
 
 Expected response:
 
-```<json>
+```json
 { "ok": true }
 ```
 
 ---
 
-## Testing GitHub Webhooks Locally (ngrok)
+# Testing GitHub Webhooks Locally (ngrok)
 
-During development, the API must receive **real GitHub webhook traffic**.  
-This is done by exposing the local server using **ngrok**.
+To receive real GitHub webhook traffic locally:
 
-### Prerequisites
-- Node.js (LTS)
-- ngrok account (free tier is sufficient)
-- Flowarden GitHub App created
+## 1️⃣ Start ngrok
 
----
-
-### 1️⃣ Start ngrok
-
-```<bash>
-ngrok http 3000
+```bash
+ngrok http 3001
 ```
 
-Example output:
+Use the HTTPS URL provided.
 
-```<text>
-https://lucy-plotful-daine.ngrok-free.dev
-```
-
-⚠️ Use the **HTTPS** URL only.
-
----
-
-### 2️⃣ Configure the GitHub App webhook
+## 2️⃣ Configure GitHub App webhook
 
 Webhook URL:
 
-```<text>
-https://<your-ngrok-url>/webhooks/github
 ```
-
-Example:
-
-```<text>
-https://lucy-plotful-daine.ngrok-free.dev/webhooks/github
+https://<your-ngrok-url>/webhooks/github
 ```
 
 Content type:
 
-```<text>
+```
 application/json
 ```
 
-Webhook secret:
-- Must match `GITHUB_WEBHOOK_SECRET` in `.env`
+Webhook secret must match:
 
----
+```
+GITHUB_WEBHOOK_SECRET
+```
 
-### 3️⃣ Redeliver a test webhook
+in your `.env` file.
 
-GitHub App → **Advanced → Webhooks**  
-Select a delivery → **Redeliver**
+## 3️⃣ Redeliver a test webhook
+
+GitHub App → Advanced → Webhooks → Redeliver
 
 Expected:
-- GitHub returns **200**
-- API logs the event
-- Headers include `X-GitHub-Event`
+
+- GitHub returns 200
+- API logs structured execution output
+- Deterministic rule/workflow behavior
 
 ---
 
-### Common Issues
+# Notes
 
-**404**
-- Check `/webhooks/github`
-- Confirm server is running
-
-**Signature verification failed**
-- Secret mismatch
-- Raw body middleware missing
-
-**ngrok not found**
-- Install from https://ngrok.com/download
+- Webhook route requires **raw body access** for signature verification.
+- JSON middleware must remain scoped to non-webhook routes.
+- In-memory storage does not persist across server restarts.
+- Workflow actions are stubbed in the MVP (no live GitHub mutations).
 
 ---
 
-### Notes
-- ngrok URLs change on restart
-- Update webhook URL accordingly
-- Local development only
+# Related Repositories
 
-## Related Repositories
 - Project hub: https://github.com/JesseCaddell/AD490-Capstone
 - Frontend UI: https://github.com/JesseCaddell/ad490-workflow-automator-web
