@@ -1,70 +1,95 @@
-# Webhook Event Normalization
+# Webhook Normalization Layer (MVP)
 
-This module converts raw GitHub webhook payloads into a **normalized internal
-event format** (`RuleContext`) used by the rules engine.
+This directory contains the normalization layer that converts raw GitHub
+webhook payloads into a stable internal format (`RuleContext`).
 
-The rules engine **must never consume raw GitHub webhook payloads directly**.
-All GitHub-specific structure is isolated here.
+For full system documentation, see:
+
+- [normalization](../../../docs/normalization.md)
+- [architecture](../../../docs/architecture.md)
+- [api-contract](../../../docs/api-contract.md)
+- [workflow-builder-mvp](../../../docs/workflow-builder-mvp.md)
 
 ---
 
-## Responsibility
 
-- Accept raw webhook headers + payloads
-- Produce a stable `RuleContext` object
-- Normalize event naming and key fields
-- Strip GitHub-specific noise from downstream logic
+## Purpose
 
-This layer is intentionally minimal and opinionated.
+The normalization layer enforces a strict boundary:
+
+- Raw GitHub webhook payloads are accepted here
+- A normalized `RuleContext` is produced
+- Downstream components (rules engine, workflow execution) MUST consume only `RuleContext`
+
+The rules engine must never read raw webhook payloads directly.
+
+---
+
+## Responsibilities
+
+- Validate required webhook headers
+- Normalize event names (e.g. `pull_request.opened`)
+- Extract repository metadata
+- Extract installation ID
+- Optionally extract actor information
+- Provide normalized `data` used by downstream evaluation
+
+This module does not:
+
+- Evaluate rules
+- Execute workflows
+- Persist data
+- Perform action logic
 
 ---
 
 ## Supported Events (MVP)
 
-Currently supported GitHub webhook events:
+Normalization currently supports:
 
-- `push`
+- `push` (demo/testing)
 - `pull_request.*`
-    - Example: `pull_request.opened`
+- `pull_request_review.*`
+- `issue.*`
 
-Unsupported events are ignored or mapped to a fallback name and produce
-minimal normalized data.
+Only normalized event names are passed downstream.
+
+Unsupported events are either ignored or minimally normalized.
 
 ---
 
-## Normalized Output
+## Output Contract
 
 All normalization outputs conform to:
 
 - `RuleContext`
 - `RuleEventName`
 
-Defined in `src/rules-engine/ruleTypes.ts`.
+Defined in:
 
-### Core fields provided
-- `event.name` (normalized event name)
-- `event.receivedAt`
-- `event.deliveryId` (when available)
-- `repository` (id, owner, name, fullName)
-- `actor` (only when both login + id are available)
-- `data` (event-specific normalized fields)
+- `src/rules-engine/ruleTypes.ts`
+
+Core fields include:
+
+- `ctx.event.name`
+- `ctx.event.receivedAt`
+- `ctx.event.deliveryId`
+- `ctx.repository`
+- `ctx.installationId`
+- `ctx.data`
 
 ---
 
-## Design Notes
+## Design Constraints
 
-- Normalization is **lossy by design** — only fields useful for rule evaluation
-  are preserved.
+- Normalization is intentionally lossy
+- Only fields required for rule/workflow evaluation are preserved
 - Optional fields are omitted entirely when unavailable
-  (`exactOptionalPropertyTypes` compliant).
-- This module does not validate rules or execute actions.
+- The output shape must remain stable and deterministic
 
 ---
 
-## Future Expansion (Non-MVP)
+> This document reflects the current MVP implementation.
+> Behavior may expand in future milestones.
 
-- Additional webhook event types
-- Strongly typed payload guards per event
-- Schema validation for normalized data
-
-These are intentionally out of scope for the MVP.
+---
