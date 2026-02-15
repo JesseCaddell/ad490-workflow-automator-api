@@ -4,9 +4,9 @@ This directory contains the storage adapter used by the rules engine.
 
 For full system documentation, see:
 
-- [storage](../../docs/storage.md)
-- [architecture](../../docs/architecture.md)
-- [rules-engine](../../docs/rules-engine.md)
+- [storage](../../../docs/storage.md)
+- [architecture](../../../docs/architecture.md)
+- [rules-engine](../../../docs/rules-engine.md)
 
 ---
 
