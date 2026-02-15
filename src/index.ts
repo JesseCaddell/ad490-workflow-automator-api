@@ -29,7 +29,7 @@ const workflowStore = new InMemoryWorkflowStore();
 await applySeedSpecs(ruleStore);
 
 // Mount webhook router with dependencies (RAW body required)
-app.use("/webhooks/github", githubWebhookRouter(ruleStore));
+app.use("/webhooks/github", githubWebhookRouter(ruleStore, workflowStore));
 
 // Workflow CRUD API (JSON parsing is local inside router)
 app.use("/api/workflows", workflowsRouter(workflowStore));

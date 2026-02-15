@@ -8,7 +8,13 @@ import type { RuleStore } from "../rules-engine/storage/ruleStore.js";
 import { normalizeWebhookEvent } from "../rules-engine/normalize/normalizeWebhookEvent.js";
 import { handleNormalizedEvent } from "../rules-engine/handleNormalizedEvent.js";
 
-export function githubWebhookRouter(ruleStore: RuleStore): express.Router {
+import type { WorkflowStore } from "../workflows/storage/workflowStore.js";
+import { executeWorkflowsForContext } from "../workflows/executeWorkflowsForContext.js";
+
+export function githubWebhookRouter(
+    ruleStore: RuleStore,
+    workflowStore: WorkflowStore
+): express.Router {
     const router = express.Router();
 
     // Use raw to avoid the `verify` warning and to correctly validate signatures.
@@ -69,16 +75,10 @@ export function githubWebhookRouter(ruleStore: RuleStore): express.Router {
             installationId: ctx.installationId,
         });
 
-        // Always return 200 on successful receipt; run engine asynchronously
+        // Always return 200 on successful receipt; run engines asynchronously
         res.sendStatus(200);
 
-        /**
-         * Engine entrypoint: consumes ONLY normalized context.
-         *
-         * NOTE: This expects handleNormalizedEvent signature to be:
-         *   handleNormalizedEvent(ruleStore, { ctx })
-         * (and for it to use ctx.installationId internally).
-         */
+        // Rules engine entrypoint (existing)
         void handleNormalizedEvent(ruleStore, { ctx }).catch((err: any) => {
             console.error("[rules-engine] error", {
                 message: err?.message ?? String(err),
@@ -88,8 +88,48 @@ export function githubWebhookRouter(ruleStore: RuleStore): express.Router {
                 delivery: ctx.event.deliveryId,
             });
         });
+
+        // Workflow engine entrypoint
+        void executeWorkflowsForContext({ workflowStore, ctx })
+            .then((results) => {
+                if (results.length === 0) {
+                    console.log("[workflow-engine] no matched workflows", {
+                        event: ctx.event.name,
+                        repo: ctx.repository.fullName,
+                        repositoryId: ctx.repository.id,
+                        installationId: ctx.installationId,
+                    });
+                    return;
+                }
+
+                console.log("[workflow-engine] matched workflows", {
+                    count: results.length,
+                    event: ctx.event.name,
+                    repo: ctx.repository.fullName,
+                });
+
+                for (const r of results) {
+                    const failures = r.stepResults.filter((s) => !s.ok).length;
+
+                    console.log("[workflow-engine] executed workflow", {
+                        workflowId: r.workflowId,
+                        workflowName: r.workflowName,
+                        stepsAttempted: r.stepsAttempted,
+                        failures,
+                        stepResults: r.stepResults,
+                    });
+                }
+            })
+            .catch((err: any) => {
+                console.error("[workflow-engine] error", {
+                    message: err?.message ?? String(err),
+                    installationId: ctx.installationId,
+                    repo: ctx.repository.fullName,
+                    event: ctx.event.name,
+                    delivery: ctx.event.deliveryId,
+                });
+            });
     });
 
     return router;
 }
-
