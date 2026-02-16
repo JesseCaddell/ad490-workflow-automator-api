@@ -1,4 +1,6 @@
 import express from "express";
+import cors from "cors";
+
 import { env } from "./config/env.js";
 import { githubWebhookRouter } from "./routes/webhooks.js";
 
@@ -9,6 +11,24 @@ import { workflowsRouter } from "./routes/workflows.js";
 import { InMemoryWorkflowStore } from "./workflows/storage/inMemoryWorkflowStore.js";
 
 const app = express();
+
+const corsMiddleware = cors({
+    origin: ["http://localhost:3000"],
+    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "x-installation-id", "x-repository-id"],
+    credentials: false,
+});
+
+// Apply CORS to all routes (including errors)
+app.use(corsMiddleware);
+
+// Express 5-safe preflight handling
+app.use((req, res, next) => {
+    if (req.method === "OPTIONS") {
+        return res.sendStatus(204);
+    }
+    next();
+});
 
 /**
  * IMPORTANT:
@@ -42,5 +62,3 @@ app.use("/health", (_req, res) => {
 app.listen(Number(env.PORT), () => {
     console.log(`🚀 Flowarden API listening on port ${env.PORT}`);
 });
-
-
