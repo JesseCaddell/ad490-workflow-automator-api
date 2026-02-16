@@ -116,10 +116,24 @@ function validateCreatePayload(
 
 function validatePatchPayload(
     body: unknown
-): { name?: string; description?: string; enabled?: boolean } | { error: string } {
+):
+    | {
+    name?: string;
+    description?: string;
+    enabled?: boolean;
+    triggerEvent?: string;
+    steps?: unknown[];
+}
+    | { error: string } {
     if (!isObject(body)) return { error: "Body must be a JSON object." };
 
-    const out: { name?: string; description?: string; enabled?: boolean } = {};
+    const out: {
+        name?: string;
+        description?: string;
+        enabled?: boolean;
+        triggerEvent?: string;
+        steps?: unknown[];
+    } = {};
 
     if ("name" in body) {
         if (typeof body.name !== "string" || body.name.trim().length === 0) {
@@ -144,8 +158,37 @@ function validatePatchPayload(
         out.enabled = body.enabled;
     }
 
+    // NEW: trigger.event patch
+    if ("trigger" in body) {
+        const trigger = (body as any).trigger;
+
+        if (!isObject(trigger)) {
+            return { error: "trigger must be an object." };
+        }
+
+        if (typeof (trigger as any).event !== "string" || (trigger as any).event.trim().length === 0) {
+            return { error: "trigger.event must be a non-empty string." };
+        }
+
+        out.triggerEvent = (trigger as any).event.trim();
+    }
+
+    // steps patch
+    if ("steps" in body) {
+        const steps = (body as any).steps;
+
+        if (steps !== undefined && !Array.isArray(steps)) {
+            return { error: "steps must be an array." };
+        }
+
+        if (Array.isArray(steps)) {
+            out.steps = steps;
+        }
+    }
+
     return out;
 }
+
 
 
 export function workflowsRouter(
@@ -253,8 +296,11 @@ export function workflowsRouter(
             ...(patch.enabled !== undefined ? { enabled: patch.enabled } : {}),
             ...(patch.description !== undefined ? { description: patch.description } : {}),
             scope: existing.scope,
-            trigger: existing.trigger,
-            steps: existing.steps,
+            trigger:
+                patch.triggerEvent !== undefined
+                    ? { event: patch.triggerEvent as any }
+                    : existing.trigger,
+            steps: patch.steps !== undefined ? (patch.steps as any) : existing.steps,
             metadata: {
                 ...(existing.metadata ?? {}),
                 createdBy: existing.metadata?.createdBy ?? "api",
