@@ -4,12 +4,8 @@ import express from "express";
 import crypto from "crypto";
 import { validateWorkflow, type ValidationError } from "../workflows/validateWorkflow.js";
 
-
 import type { Workflow } from "../workflows/workflowTypes.js";
-import type {
-    WorkflowOwnerKey,
-    WorkflowStore,
-} from "../workflows/storage/workflowStore.js";
+import type { WorkflowOwnerKey, WorkflowStore } from "../workflows/storage/workflowStore.js";
 
 type ApiErrorCode =
     | "BAD_REQUEST"
@@ -34,7 +30,6 @@ function fail(
         error: { code, message, ...(details ? { details } : {}) },
     });
 }
-
 
 /**
  * MVP scope resolution:
@@ -87,8 +82,8 @@ function validateCreatePayload(
 
     if (
         !isObject(trigger) ||
-        typeof trigger.event !== "string" ||
-        trigger.event.trim().length === 0
+        typeof (trigger as any).event !== "string" ||
+        (trigger as any).event.trim().length === 0
     ) {
         return { error: "trigger.event is required." };
     }
@@ -107,7 +102,7 @@ function validateCreatePayload(
 
     return {
         name: name.trim(),
-        triggerEvent: trigger.event.trim(),
+        triggerEvent: (trigger as any).event.trim(),
         steps: Array.isArray(steps) ? steps : [],
         ...(description !== undefined ? { description } : {}),
         ...(enabled !== undefined ? { enabled } : {}),
@@ -136,29 +131,29 @@ function validatePatchPayload(
     } = {};
 
     if ("name" in body) {
-        if (typeof body.name !== "string" || body.name.trim().length === 0) {
+        if (typeof (body as any).name !== "string" || (body as any).name.trim().length === 0) {
             return { error: "name must be a non-empty string." };
         }
-        out.name = body.name.trim();
+        out.name = (body as any).name.trim();
     }
 
     if ("description" in body) {
-        if (body.description !== undefined && typeof body.description !== "string") {
+        if ((body as any).description !== undefined && typeof (body as any).description !== "string") {
             return { error: "description must be a string." };
         }
-        if (body.description !== undefined) {
-            out.description = body.description;
+        if ((body as any).description !== undefined) {
+            out.description = (body as any).description;
         }
     }
 
     if ("enabled" in body) {
-        if (typeof body.enabled !== "boolean") {
+        if (typeof (body as any).enabled !== "boolean") {
             return { error: "enabled must be a boolean." };
         }
-        out.enabled = body.enabled;
+        out.enabled = (body as any).enabled;
     }
 
-    // NEW: trigger.event patch
+    // trigger.event patch
     if ("trigger" in body) {
         const trigger = (body as any).trigger;
 
@@ -189,11 +184,7 @@ function validatePatchPayload(
     return out;
 }
 
-
-
-export function workflowsRouter(
-    workflowStore: WorkflowStore
-): express.Router {
+export function workflowsRouter(workflowStore: WorkflowStore): express.Router {
     const router = express.Router();
 
     // JSON parsing stays local (webhooks need raw body)
@@ -234,12 +225,17 @@ export function workflowsRouter(
             trigger: { event: parsed.triggerEvent as any },
             steps: parsed.steps as any,
             metadata: { createdBy: "api" },
-            ...(parsed.description !== undefined
-                ? { description: parsed.description }
-                : {}),
+            ...(parsed.description !== undefined ? { description: parsed.description } : {}),
         };
 
-        const errors = validateWorkflow(workflow);
+        let errors: ValidationError[] = [];
+        try {
+            errors = validateWorkflow(workflow);
+        } catch (e) {
+            console.error("[validateWorkflow] threw:", e);
+            return fail(res, "INTERNAL", "Workflow validation crashed.", 500);
+        }
+
         if (errors.length > 0) {
             return fail(res, "BAD_REQUEST", "Invalid workflow payload.", 400, errors);
         }
@@ -261,10 +257,7 @@ export function workflowsRouter(
                 : fail(res, "BAD_REQUEST", "Invalid scope headers.", 400);
         }
 
-        const wf = await workflowStore.getWorkflow(
-            scope.key,
-            req.params.workflowId
-        );
+        const wf = await workflowStore.getWorkflow(scope.key, req.params.workflowId);
 
         if (!wf) return fail(res, "NOT_FOUND", "Workflow not found.", 404);
         return ok(res, wf);
@@ -279,10 +272,7 @@ export function workflowsRouter(
                 : fail(res, "BAD_REQUEST", "Invalid scope headers.", 400);
         }
 
-        const existing = await workflowStore.getWorkflow(
-            scope.key,
-            req.params.workflowId
-        );
+        const existing = await workflowStore.getWorkflow(scope.key, req.params.workflowId);
         if (!existing) return fail(res, "NOT_FOUND", "Workflow not found.", 404);
 
         const patch = validatePatchPayload(req.body);
@@ -296,10 +286,7 @@ export function workflowsRouter(
             ...(patch.enabled !== undefined ? { enabled: patch.enabled } : {}),
             ...(patch.description !== undefined ? { description: patch.description } : {}),
             scope: existing.scope,
-            trigger:
-                patch.triggerEvent !== undefined
-                    ? { event: patch.triggerEvent as any }
-                    : existing.trigger,
+            trigger: patch.triggerEvent !== undefined ? { event: patch.triggerEvent as any } : existing.trigger,
             steps: patch.steps !== undefined ? (patch.steps as any) : existing.steps,
             metadata: {
                 ...(existing.metadata ?? {}),
@@ -307,11 +294,17 @@ export function workflowsRouter(
             },
         };
 
-        const errors = validateWorkflow(updated);
+        let errors: ValidationError[] = [];
+        try {
+            errors = validateWorkflow(updated);
+        } catch (e) {
+            console.error("[validateWorkflow] threw:", e);
+            return fail(res, "INTERNAL", "Workflow validation crashed.", 500);
+        }
+
         if (errors.length > 0) {
             return fail(res, "BAD_REQUEST", "Invalid workflow payload.", 400, errors);
         }
-
 
         const saved = await workflowStore.updateWorkflow(scope.key, updated);
         return ok(res, saved);
@@ -326,10 +319,7 @@ export function workflowsRouter(
                 : fail(res, "BAD_REQUEST", "Invalid scope headers.", 400);
         }
 
-        const deleted = await workflowStore.deleteWorkflow(
-            scope.key,
-            req.params.workflowId
-        );
+        const deleted = await workflowStore.deleteWorkflow(scope.key, req.params.workflowId);
 
         if (!deleted) return fail(res, "NOT_FOUND", "Workflow not found.", 404);
         return res.sendStatus(204);
