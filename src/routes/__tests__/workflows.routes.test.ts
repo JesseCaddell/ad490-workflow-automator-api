@@ -171,40 +171,6 @@ test("repo scope isolation: workflow not visible across different repositoryId",
     }
 });
 
-test("POST /api/workflows rejects push workflow trigger (demo-only)", async () => {
-    const { server, baseUrl } = makeServer();
-    try {
-        const headers = scopeHeaders(1, 2);
-
-        const res = await fetch(`${baseUrl}/api/workflows`, {
-            method: "POST",
-            headers,
-            body: JSON.stringify(
-                validWorkflowPayload({
-                    name: "Invalid Push Workflow",
-                    trigger: { event: "push" },
-                })
-            ),
-        });
-
-        assert.equal(res.status, 400);
-
-        const json: any = await res.json();
-        assert.equal(json.ok, false);
-        assert.equal(json.error.code, "BAD_REQUEST");
-        assert.equal(json.error.message, "Invalid workflow payload.");
-
-        assert.ok(Array.isArray(json.error.details));
-        assert.ok(
-            json.error.details.some(
-                (e: any) => e.path === "trigger.event" && String(e.message).includes("push")
-            )
-        );
-    } finally {
-        server.close();
-    }
-});
-
 test("POST /api/workflows rejects empty steps", async () => {
     const { server, baseUrl } = makeServer();
     try {
@@ -229,6 +195,42 @@ test("POST /api/workflows rejects empty steps", async () => {
 
         assert.ok(Array.isArray(json.error.details));
         assert.ok(json.error.details.some((e: any) => e.path === "steps"));
+    } finally {
+        server.close();
+    }
+});
+
+test("POST /api/workflows rejects unsupported trigger event", async () => {
+    const { server, baseUrl } = makeServer();
+    try {
+        const headers = scopeHeaders(1, 2);
+
+        const res = await fetch(`${baseUrl}/api/workflows`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify(
+                validWorkflowPayload({
+                    name: "Unsupported Trigger Workflow",
+                    trigger: { event: "deployment.created" },
+                })
+            ),
+        });
+
+        assert.equal(res.status, 400);
+
+        const json: any = await res.json();
+        assert.equal(json.ok, false);
+        assert.equal(json.error.code, "BAD_REQUEST");
+        assert.equal(json.error.message, "Invalid workflow payload.");
+
+        assert.ok(Array.isArray(json.error.details));
+        assert.ok(
+            json.error.details.some(
+                (e: any) =>
+                    e.path === "trigger.event" &&
+                    String(e.message).includes("deployment.created")
+            )
+        );
     } finally {
         server.close();
     }

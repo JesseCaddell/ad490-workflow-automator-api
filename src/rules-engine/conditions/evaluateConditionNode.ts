@@ -1,14 +1,6 @@
-import type { ConditionGroup, ConditionLeaf, ConditionNode, RuleContext } from "../ruleTypes.js";
+import type { ConditionNode, RuleContext } from "../ruleTypes.js";
 import { getValueAtPath } from "./getValueAtPath.js";
 import { applyOperator } from "./operators.js";
-
-function isLeaf(n: ConditionNode): n is ConditionLeaf {
-    return n.type === "leaf";
-}
-
-function isGroup(n: ConditionNode): n is ConditionGroup {
-    return n.type === "group";
-}
 
 /**
  * Evaluate a ConditionNode (leaf or group) against RuleContext.
@@ -17,12 +9,12 @@ function isGroup(n: ConditionNode): n is ConditionGroup {
 export function evaluateConditionNode(node: ConditionNode, ctx: RuleContext): boolean {
     if (!node) return true;
 
-    if (isLeaf(node)) {
+    if (node.type === "leaf") {
         const actual = getValueAtPath(ctx, node.path);
         return applyOperator(node, actual);
     }
 
-    if (isGroup(node)) {
+    if (node.type === "group") {
         // If multiple are present, treat them as constraints combined with AND.
         let ok = true;
 

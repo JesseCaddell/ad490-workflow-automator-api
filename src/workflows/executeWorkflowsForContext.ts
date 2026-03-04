@@ -1,7 +1,6 @@
 // src/workflows/executeWorkflowsForContext.ts
 
 import type { RuleContext } from "../rules-engine/ruleTypes.js";
-import type { Workflow } from "./workflowTypes.js";
 import type { WorkflowOwnerKey, WorkflowStore } from "./storage/workflowStore.js";
 import type { ActionStubResult, EvaluatedActionInput } from "../rules-engine/actions/actionTypes.js";
 import { executeActionStubs } from "../rules-engine/actions/executeActionStubs.js";
@@ -21,32 +20,20 @@ export type WorkflowExecutionResult = {
     stepResults: WorkflowStepExecution[];
 };
 
-function ownerKeyFromCtx(ctx: RuleContext): WorkflowOwnerKey {
-    return {
-        installationId: ctx.installationId,
-        repositoryId: ctx.repository.id,
-    };
-}
-
-function isEnabledWorkflow(wf: Workflow): boolean {
-    return wf.enabled;
-}
-
-function matchesTrigger(wf: Workflow, ctx: RuleContext): boolean {
-    return wf.trigger?.event === ctx.event.name;
-}
-
 export async function executeWorkflowsForContext(input: {
     workflowStore: WorkflowStore;
     ctx: RuleContext;
 }): Promise<WorkflowExecutionResult[]> {
-    const key = ownerKeyFromCtx(input.ctx);
+    const key: WorkflowOwnerKey = {
+        installationId: input.ctx.installationId,
+        repositoryId: input.ctx.repository.id,
+    };
 
     const workflows = await input.workflowStore.listWorkflowsForRepo(key);
 
-    const matched = workflows
-        .filter(isEnabledWorkflow)
-        .filter((wf) => matchesTrigger(wf, input.ctx));
+    const matched = workflows.filter(
+        (wf) => wf.enabled && wf.trigger?.event === input.ctx.event.name
+    );
 
     const results: WorkflowExecutionResult[] = [];
 

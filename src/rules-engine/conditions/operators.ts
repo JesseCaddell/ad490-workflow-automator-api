@@ -1,34 +1,7 @@
 import type { ConditionLeaf } from "../ruleTypes.js";
 
-function isPrimitive(v: unknown): v is string | number | boolean | null {
-    return (
-        v === null ||
-        typeof v === "string" ||
-        typeof v === "number" ||
-        typeof v === "boolean"
-    );
-}
-
 function asArray(v: unknown): unknown[] | null {
     return Array.isArray(v) ? v : null;
-}
-
-function tryParseDate(v: unknown): number | null {
-    if (typeof v !== "string") return null;
-    const t = Date.parse(v);
-    return Number.isNaN(t) ? null : t;
-}
-
-function compare(a: unknown, b: unknown): number | null {
-    // numbers
-    if (typeof a === "number" && typeof b === "number") return a - b;
-
-    // ISO-ish dates (string)
-    const da = tryParseDate(a);
-    const db = tryParseDate(b);
-    if (da !== null && db !== null) return da - db;
-
-    return null;
 }
 
 export function applyOperator(
@@ -44,7 +17,6 @@ export function applyOperator(
         }
 
         case "equals": {
-            // MVP: expected is primitive or array of primitives per ruleTypes.ts
             if (Array.isArray(expected) && Array.isArray(actual)) {
                 if (expected.length !== actual.length) return false;
                 return expected.every((v, i) => actual[i] === v);
@@ -62,14 +34,20 @@ export function applyOperator(
 
         case "contains": {
             if (typeof actual === "string") {
-                if (!isPrimitive(expected) || expected === null) return false;
+                if (
+                    expected === null ||
+                    (typeof expected !== "string" &&
+                        typeof expected !== "number" &&
+                        typeof expected !== "boolean")
+                ) {
+                    return false;
+                }
                 return actual.includes(String(expected));
             }
 
             const arr = asArray(actual);
             if (!arr) return false;
 
-            // if expected is an array, require all expected values exist in actual
             if (Array.isArray(expected)) {
                 return expected.every((v) => arr.includes(v));
             }
@@ -78,7 +56,6 @@ export function applyOperator(
         }
 
         case "in": {
-            // "actual in expected[]"
             if (!Array.isArray(expected)) return false;
             return expected.includes(actual as any);
         }
@@ -88,7 +65,20 @@ export function applyOperator(
         case "lt":
         case "lte": {
             if (expected === undefined) return false;
-            const c = compare(actual, expected);
+
+            // Inline comparison: numbers first, then ISO date strings
+            let c: number | null = null;
+
+            if (typeof actual === "number" && typeof expected === "number") {
+                c = actual - expected;
+            } else if (typeof actual === "string" && typeof expected === "string") {
+                const da = Date.parse(actual);
+                const db = Date.parse(expected);
+                if (!Number.isNaN(da) && !Number.isNaN(db)) {
+                    c = da - db;
+                }
+            }
+
             if (c === null) return false;
 
             if (op === "gt") return c > 0;
