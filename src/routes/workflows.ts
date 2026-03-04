@@ -57,6 +57,34 @@ function requireScope(
     return { key: { installationId, repositoryId } };
 }
 
+/**
+ * Middleware: resolve scope headers once for all workflow routes.
+ * On success, attaches WorkflowOwnerKey to res.locals.scope.
+ * On failure, sends the appropriate error response and short-circuits.
+ */
+function scopeMiddleware(
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+) {
+    const scope = requireScope(req);
+
+    if ("error" in scope) {
+        if (scope.error === "UNAUTHORIZED") {
+            return fail(res, "UNAUTHORIZED", "Missing scope headers.", 401);
+        }
+        return fail(res, "BAD_REQUEST", "Invalid scope headers.", 400);
+    }
+
+    res.locals.scope = scope.key;
+    next();
+}
+
+/** Type-safe accessor for the scope set by middleware. */
+function getScope(res: express.Response): WorkflowOwnerKey {
+    return res.locals.scope as WorkflowOwnerKey;
+}
+
 function isObject(v: unknown): v is Record<string, unknown> {
     return typeof v === "object" && v !== null && !Array.isArray(v);
 }
@@ -190,27 +218,19 @@ export function workflowsRouter(workflowStore: WorkflowStore): express.Router {
     // JSON parsing stays local (webhooks need raw body)
     router.use(express.json());
 
+    // Scope resolution runs once for every route in this router
+    router.use(scopeMiddleware);
+
     // LIST
     router.get("/", async (req, res) => {
-        const scope = requireScope(req);
-        if ("error" in scope) {
-            return scope.error === "UNAUTHORIZED"
-                ? fail(res, "UNAUTHORIZED", "Missing scope headers.", 401)
-                : fail(res, "BAD_REQUEST", "Invalid scope headers.", 400);
-        }
-
-        const workflows = await workflowStore.listWorkflowsForRepo(scope.key);
+        const scope = getScope(res);
+        const workflows = await workflowStore.listWorkflowsForRepo(scope);
         return ok(res, workflows);
     });
 
     // CREATE
     router.post("/", async (req, res) => {
-        const scope = requireScope(req);
-        if ("error" in scope) {
-            return scope.error === "UNAUTHORIZED"
-                ? fail(res, "UNAUTHORIZED", "Missing scope headers.", 401)
-                : fail(res, "BAD_REQUEST", "Invalid scope headers.", 400);
-        }
+        const scope = getScope(res);
 
         const parsed = validateCreatePayload(req.body);
         if ("error" in parsed) {
@@ -221,7 +241,7 @@ export function workflowsRouter(workflowStore: WorkflowStore): express.Router {
             id: crypto.randomUUID(),
             name: parsed.name,
             enabled: parsed.enabled ?? true,
-            scope: scope.key,
+            scope,
             trigger: { event: parsed.triggerEvent as any },
             steps: parsed.steps as any,
             metadata: { createdBy: "api" },
@@ -241,7 +261,7 @@ export function workflowsRouter(workflowStore: WorkflowStore): express.Router {
         }
 
         try {
-            const created = await workflowStore.createWorkflow(scope.key, workflow);
+            const created = await workflowStore.createWorkflow(scope, workflow);
             return ok(res, created, 201);
         } catch {
             return fail(res, "CONFLICT", "Workflow already exists.", 409);
@@ -250,14 +270,8 @@ export function workflowsRouter(workflowStore: WorkflowStore): express.Router {
 
     // GET
     router.get("/:workflowId", async (req, res) => {
-        const scope = requireScope(req);
-        if ("error" in scope) {
-            return scope.error === "UNAUTHORIZED"
-                ? fail(res, "UNAUTHORIZED", "Missing scope headers.", 401)
-                : fail(res, "BAD_REQUEST", "Invalid scope headers.", 400);
-        }
-
-        const wf = await workflowStore.getWorkflow(scope.key, req.params.workflowId);
+        const scope = getScope(res);
+        const wf = await workflowStore.getWorkflow(scope, req.params.workflowId);
 
         if (!wf) return fail(res, "NOT_FOUND", "Workflow not found.", 404);
         return ok(res, wf);
@@ -265,14 +279,9 @@ export function workflowsRouter(workflowStore: WorkflowStore): express.Router {
 
     // PATCH
     router.patch("/:workflowId", async (req, res) => {
-        const scope = requireScope(req);
-        if ("error" in scope) {
-            return scope.error === "UNAUTHORIZED"
-                ? fail(res, "UNAUTHORIZED", "Missing scope headers.", 401)
-                : fail(res, "BAD_REQUEST", "Invalid scope headers.", 400);
-        }
+        const scope = getScope(res);
 
-        const existing = await workflowStore.getWorkflow(scope.key, req.params.workflowId);
+        const existing = await workflowStore.getWorkflow(scope, req.params.workflowId);
         if (!existing) return fail(res, "NOT_FOUND", "Workflow not found.", 404);
 
         const patch = validatePatchPayload(req.body);
@@ -306,20 +315,14 @@ export function workflowsRouter(workflowStore: WorkflowStore): express.Router {
             return fail(res, "BAD_REQUEST", "Invalid workflow payload.", 400, errors);
         }
 
-        const saved = await workflowStore.updateWorkflow(scope.key, updated);
+        const saved = await workflowStore.updateWorkflow(scope, updated);
         return ok(res, saved);
     });
 
     // DELETE
     router.delete("/:workflowId", async (req, res) => {
-        const scope = requireScope(req);
-        if ("error" in scope) {
-            return scope.error === "UNAUTHORIZED"
-                ? fail(res, "UNAUTHORIZED", "Missing scope headers.", 401)
-                : fail(res, "BAD_REQUEST", "Invalid scope headers.", 400);
-        }
-
-        const deleted = await workflowStore.deleteWorkflow(scope.key, req.params.workflowId);
+        const scope = getScope(res);
+        const deleted = await workflowStore.deleteWorkflow(scope, req.params.workflowId);
 
         if (!deleted) return fail(res, "NOT_FOUND", "Workflow not found.", 404);
         return res.sendStatus(204);
