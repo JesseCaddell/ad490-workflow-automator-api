@@ -235,3 +235,94 @@ test("POST /api/workflows rejects unsupported trigger event", async () => {
         server.close();
     }
 });
+
+test("POST /api/workflows rejects unsupported action type in steps", async () => {
+    const { server, baseUrl } = makeServer();
+    try {
+        const headers = scopeHeaders(1, 2);
+
+        const res = await fetch(`${baseUrl}/api/workflows`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify(
+                validWorkflowPayload({
+                    name: "Bad Action Workflow",
+                    steps: [
+                        {
+                            id: "s1",
+                            name: "Invalid action",
+                            action: { type: "launchMissiles", params: {} },
+                        },
+                    ],
+                })
+            ),
+        });
+
+        assert.equal(res.status, 400);
+
+        const json: any = await res.json();
+        assert.equal(json.ok, false);
+        assert.equal(json.error.code, "BAD_REQUEST");
+
+        assert.ok(Array.isArray(json.error.details));
+        assert.ok(
+            json.error.details.some(
+                (e: any) =>
+                    String(e.path).includes("action.type") &&
+                    String(e.message).includes("launchMissiles")
+            )
+        );
+    } finally {
+        server.close();
+    }
+});
+
+test("PATCH /api/workflows does not mutate unintended fields", async () => {
+    const { server, baseUrl } = makeServer();
+    try {
+        const headers = scopeHeaders(1, 2);
+
+        // Create a workflow with known values
+        const createRes = await fetch(`${baseUrl}/api/workflows`, {
+            method: "POST",
+            headers,
+            body: JSON.stringify(
+                validWorkflowPayload({
+                    name: "Original Name",
+                    description: "Original description",
+                    enabled: true,
+                    trigger: { event: "issue.opened" },
+                })
+            ),
+        });
+        assert.equal(createRes.status, 201);
+
+        const created: any = await createRes.json();
+        const id = created.data.id;
+
+        // Patch only the name
+        const patchRes = await fetch(`${baseUrl}/api/workflows/${id}`, {
+            method: "PATCH",
+            headers,
+            body: JSON.stringify({ name: "Updated Name" }),
+        });
+        assert.equal(patchRes.status, 200);
+
+        const patched: any = await patchRes.json();
+        assert.equal(patched.ok, true);
+
+        // Name should be updated
+        assert.equal(patched.data.name, "Updated Name");
+
+        // All other fields should be unchanged
+        assert.equal(patched.data.description, "Original description");
+        assert.equal(patched.data.enabled, true);
+        assert.equal(patched.data.trigger.event, "issue.opened");
+        assert.equal(patched.data.scope.installationId, 1);
+        assert.equal(patched.data.scope.repositoryId, 2);
+        assert.equal(patched.data.steps.length, 1);
+        assert.equal(patched.data.steps[0].action.type, "addLabel");
+    } finally {
+        server.close();
+    }
+});
