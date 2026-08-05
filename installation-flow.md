@@ -1,6 +1,6 @@
 ## Repository Installation & Authentication Flow
 
-- User installs the Flowwarden GitHub App on a specific repository
+- User installs the Flowarden GitHub App on a specific repository
 - GitHub prompts the user to approve requested repository permissions
 - GitHub creates a repository-scoped installation
 - GitHub assigns a unique **Installation ID** to the repository installation
