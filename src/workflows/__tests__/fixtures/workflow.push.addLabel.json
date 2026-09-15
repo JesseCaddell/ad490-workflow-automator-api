@@ -1,7 +1,7 @@
 {
   "id": "wf_seed_pr_opened_label",
   "name": "PR opened: add WIP label",
-  "description": "Demo workflow for MVP",
+  "description": "Demo workflow",
   "enabled": true,
   "scope": {
     "installationId": 105808469,

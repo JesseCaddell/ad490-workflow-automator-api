@@ -1,7 +1,6 @@
-# Architecture Overview (MVP)
+# Architecture Overview
 
-> This document reflects the current MVP implementation.  
-> Behavior may expand in future milestones.
+> This document reflects the current implementation. It evolves as development continues.
 
 This document provides a system-level overview of the AD490 Workflow Automator API.
 
@@ -10,7 +9,7 @@ It explains:
 - Major components and boundaries
 - Data flow from webhook receipt to execution
 - Scoping and determinism guarantees
-- What is intentionally out of scope in the MVP
+- What is intentionally out of scope right now
 
 ---
 
@@ -110,7 +109,7 @@ Responsibilities:
 - Select enabled rules matching ctx.event.name
 - Evaluate conditions against ctx.data
 - Produce a list of actions to execute
-- Execute actions sequentially (stubs for MVP)
+- Execute actions sequentially (currently via stubs)
 - Emit structured logs
 
 Evaluation model:
@@ -151,9 +150,9 @@ Reference:
 
 ---
 
-## 3.6 Storage Layer (MVP)
+## 3.6 Storage Layer
 
-The MVP uses in-memory storage adapters for both rules and workflows.
+This currently uses in-memory storage adapters for both rules and workflows.
 
 Responsibilities:
 
@@ -211,7 +210,7 @@ This ensures consistent scoping between API usage and webhook execution.
 
 ---
 
-# 5. Determinism Guarantees (MVP)
+# 5. Determinism Guarantees
 
 The system is intentionally deterministic to support testing and demo reliability.
 
@@ -228,7 +227,7 @@ The API guarantees:
 - sequential action/step execution in array order
 - action failures do not stop evaluation or execution
 
-There are no retries or background queues in MVP.
+There are no retries or background queues currently.
 
 ---
 
@@ -247,9 +246,9 @@ Logs are structured JSON where feasible to allow easy scanning.
 
 ---
 
-# 7. Out of Scope (MVP)
+# 7. Out of Scope
 
-Intentionally excluded from MVP:
+Intentionally excluded right now:
 
 - user authentication and RBAC
 - persistent database storage
@@ -261,7 +260,7 @@ Intentionally excluded from MVP:
 - cross-repo workflows or organization-level automation
 - workflow versioning and migration tooling
 
-These features may be introduced in later milestones.
+These features may be introduced as development continues.
 
 ---
 

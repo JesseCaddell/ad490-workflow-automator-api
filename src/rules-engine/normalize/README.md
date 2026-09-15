@@ -1,4 +1,4 @@
-# Webhook Normalization Layer (MVP)
+# Webhook Normalization Layer
 
 This directory contains the normalization layer that converts raw GitHub
 webhook payloads into a stable internal format (`RuleContext`).
@@ -8,7 +8,7 @@ For full system documentation, see:
 - [normalization](../../../docs/normalization.md)
 - [architecture](../../../docs/architecture.md)
 - [api-contract](../../../docs/api-contract.md)
-- [workflow-builder-mvp](../../../docs/workflow-builder-mvp.md)
+- [workflow-builder](../../../docs/workflow-builder-mvp.md)
 
 ---
 
@@ -43,7 +43,7 @@ This module does not:
 
 ---
 
-## Supported Events (MVP)
+## Supported Events
 
 Normalization currently supports:
 
@@ -89,7 +89,6 @@ Core fields include:
 
 ---
 
-> This document reflects the current MVP implementation.
-> Behavior may expand in future milestones.
+> This document reflects the current implementation. It evolves as development continues.
 
 ---

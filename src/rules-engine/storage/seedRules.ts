@@ -86,7 +86,7 @@ export const DEFAULT_SEED_SPECS: SeedSpec[] = [
 
 /**
  * Applies seed specs to the store. Intended for dev/local boot.
- * This is "replace all rules for repo" to keep MVP deterministic.
+ * This is "replace all rules for repo" to keep behavior deterministic.
  */
 export async function applySeedSpecs(
     store: RuleStore,

@@ -1,18 +1,18 @@
 # Workflow Storage (Local Notes)
 
-This directory contains the storage adapter for Workflow Builder (MVP).
+This directory contains the storage adapter for the Workflow Builder.
 
 For full system documentation, see:
 
-- [workflow-builder-mvp](../../../docs/workflow-builder-mvp.md)
+- [workflow-builder](../../../docs/workflow-builder-mvp.md)
 - [storage](../../../docs/storage.md)
 - [architecture](../../../docs/architecture.md)
 
 ---
 
-## Current Implementation (MVP)
+## Current Implementation
 
-The MVP uses an **in-memory Map-based storage adapter**.
+This currently uses an **in-memory Map-based storage adapter**.
 
 Characteristics:
 
@@ -50,7 +50,7 @@ installation is installed on multiple repositories.
 1. `workflow.metadata.createdAt` ascending
 2. tie-break: `workflow.id` ascending
 
-An explicit ordering field is not yet supported in the MVP.
+An explicit ordering field is not yet supported.
 
 ---
 
@@ -66,7 +66,7 @@ Callers SHOULD NOT attempt to manage timestamps themselves.
 
 ---
 
-## MVP Constraints
+## Current Constraints
 
 - No database persistence
 - No migrations
@@ -74,9 +74,8 @@ Callers SHOULD NOT attempt to manage timestamps themselves.
 - No concurrency guarantees
 - No audit history
 
-This is intentional for the MVP.
+This is intentional for now.
 
 ---
 
-> This document reflects the current MVP implementation.
-> Behavior may expand in future milestones.
+> This document reflects the current implementation. It evolves as development continues.

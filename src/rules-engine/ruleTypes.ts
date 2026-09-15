@@ -12,7 +12,7 @@ export type RuleEventName =
     | "pull_request.closed"
     | "pull_request.reopened"
     | "pull_request_review.submitted"
-    | (string & {}); // allow expansion without breaking MVP
+    | (string & {}); // allow expansion without breaking existing callers
 
 export interface RuleTrigger {
     event: RuleEventName;
@@ -65,7 +65,7 @@ export type ActionType =
 
 export interface Action {
     type: ActionType;
-    params?: Record<string, unknown>; // MVP: unvalidated until action stubs exist
+    params?: Record<string, unknown>; // unvalidated until action stubs exist
 }
 
 export interface Rule {

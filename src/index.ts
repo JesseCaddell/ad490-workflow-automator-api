@@ -39,13 +39,13 @@ app.use((req, res, next) => {
  * So: do NOT app.use(express.json()) globally here.
  */
 
-// Initialize rule storage once (MVP: in-memory)
+// Initialize rule storage once (in-memory)
 const ruleStore = new InMemoryRuleStore();
 
-// Initialize workflow storage once (MVP: in-memory)
+// Initialize workflow storage once (in-memory)
 const workflowStore = new InMemoryWorkflowStore();
 
-// Seed once on startup (MVP dev-only)
+// Seed once on startup (dev-only)
 await applySeedSpecs(ruleStore);
 
 // Mount webhook router with dependencies (RAW body required)

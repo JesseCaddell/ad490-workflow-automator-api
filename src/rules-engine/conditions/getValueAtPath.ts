@@ -7,7 +7,7 @@ function isRecord(v: unknown): v is AnyRecord {
 }
 
 /**
- * Path resolution rules (MVP):
+ * Path resolution rules:
  * - If path starts with "event.", "repository.", "actor.", or "data.", read from ctx root.
  * - Otherwise, assume the path is rooted in ctx.data (so "pullRequest.base.ref" works).
  */

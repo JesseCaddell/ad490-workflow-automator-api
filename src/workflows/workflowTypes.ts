@@ -11,7 +11,7 @@ export interface WorkflowScope {
 }
 
 /**
- * MVP workflow:
+ * Current workflow shape:
  * - 1 trigger
  * - linear steps
  * - no branching
@@ -45,12 +45,12 @@ export interface WorkflowTrigger {
 }
 
 /**
- * Linear step (MVP).
+ * Linear step.
  */
 export interface WorkflowStep {
     id: WorkflowStepId;
     name: string;
-    enabled?: boolean; // optional for MVP, useful for UI toggles later
+    enabled?: boolean; // optional for now, useful for UI toggles later
 
     action: WorkflowAction;
 }

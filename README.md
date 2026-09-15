@@ -5,15 +5,15 @@
 
 This repository contains the **backend API** and **GitHub App integration layer** for the AD490 Workflow Automator.
 
-## Current MVP Capabilities
+## Current Capabilities
 
 - GitHub App webhook receiver + signature verification
 - Normalization layer
 - Deterministic rules engine (stub actions)
-- Workflow Builder MVP (sequential execution, repo-scoped)
+- Workflow Builder (sequential execution, repo-scoped)
 - Structured execution logging
 
-## Planned (Future Milestones)
+## Planned
 
 - JSON → YAML workflow generation
 - Commit workflow files via GitHub API
@@ -23,9 +23,9 @@ This repository contains the **backend API** and **GitHub App integration layer*
 
 ---
 
-# MVP Scope (Current Implementation)
+# Current Scope (Current Implementation)
 
-The current MVP includes:
+The current implementation includes:
 
 - GitHub webhook receiver (`/webhooks/github`)
 - Signature verification
@@ -38,7 +38,7 @@ The current MVP includes:
   - Stub action execution (no live GitHub mutations)
 - In-memory storage adapter (replaceable)
 
-The MVP prioritizes:
+The current design prioritizes:
 
 - Determinism
 - Strict scoping
@@ -56,7 +56,7 @@ See:
 
 - `docs/architecture.md`
 - `docs/api-contract.md`
-- `docs/workflow-builder-mvp.md`
+- `docs/workflow-builder-mvp.md` (Workflow Builder contract)
 - `docs/rules-engine.md`
 - `docs/normalization.md`
 - `docs/storage.md`
@@ -69,7 +69,7 @@ These documents define:
 - Supported actions (stub vs real)
 - Deterministic execution model
 - Error behavior
-- Explicit MVP limitations
+- Explicit current limitations
 
 ---
 
@@ -79,9 +79,9 @@ These documents define:
 - TypeScript
 - Express
 - Native Node test runner
-- In-memory storage adapter (MVP)
+- In-memory storage adapter
 
-Future milestones may introduce:
+Future work may introduce:
 
 - Octokit (live GitHub mutations)
 - Persistent database storage
@@ -170,7 +170,7 @@ Expected:
 - Webhook route requires **raw body access** for signature verification.
 - JSON middleware must remain scoped to non-webhook routes.
 - In-memory storage does not persist across server restarts.
-- Workflow actions are stubbed in the MVP (no live GitHub mutations).
+- Workflow actions are currently stubbed (no live GitHub mutations).
 
 ---
 

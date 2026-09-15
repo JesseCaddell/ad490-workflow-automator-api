@@ -1,4 +1,4 @@
-# Rules Engine (MVP)
+# Rules Engine
 
 This folder contains the deterministic rule evaluation engine.
 
@@ -8,13 +8,13 @@ against repository-scoped rules and executes action stubs.
 It does **not**:
 - Access raw webhook payloads
 - Manage persistence
-- Perform real GitHub mutations (MVP uses stubs)
+- Perform real GitHub mutations (currently uses stubs)
 
 ---
 For full system documentation, see:
 - [architecture](../../docs/architecture.md)
 - [api-contract](../../docs/api-contract.md)
-- [workflow-builder-mvp](../../docs/workflow-builder-mvp.md)
+- [workflow-builder](../../docs/workflow-builder-mvp.md)
 - [normalization](../../docs/normalization.md)
 - [storage](../../docs/storage.md)
 
@@ -30,7 +30,7 @@ For full system documentation, see:
 
 ---
 
-# Core Guarantees (MVP)
+# Core Guarantees
 
 - Evaluation uses only normalized `RuleContext`
 - Deterministic behavior:
@@ -44,7 +44,7 @@ For full system documentation, see:
 
 ---
 
-# Condition Operators (MVP)
+# Condition Operators
 
 Supported operators:
 
@@ -77,12 +77,12 @@ The rules engine supports these action names:
 - `setField`
 
 Note:
-- Only some are implemented as stubs in MVP.
+- Only some are currently implemented as stubs.
 - Real GitHub execution (Octokit) is future work.
 
 ---
 
-# Explicitly Out of Scope (MVP)
+# Explicitly Out of Scope
 
 The rules engine does NOT support:
 
@@ -96,7 +96,6 @@ The rules engine does NOT support:
 
 ---
 
-> This document reflects the current MVP implementation.
-> Behavior may expand in future milestones.
+> This document reflects the current implementation. It evolves as development continues.
 
 ---

@@ -50,7 +50,7 @@ export async function handleNormalizedEvent(
         )
     );
 
-    // TODO(real): Replace stubs with real GitHub execution (Octokit) once MVP demo is complete.
+    // TODO(real): Replace stubs with real GitHub execution (Octokit).
 }
 
 

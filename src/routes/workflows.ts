@@ -32,7 +32,7 @@ function fail(
 }
 
 /**
- * MVP scope resolution:
+ * Scope resolution:
  * Non-webhook routes must explicitly provide scope.
  *
  * Headers:

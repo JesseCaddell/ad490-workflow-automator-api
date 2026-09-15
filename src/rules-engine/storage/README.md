@@ -10,9 +10,9 @@ For full system documentation, see:
 
 ---
 
-## Current Implementation (MVP)
+## Current Implementation
 
-The MVP uses an **in-memory Map-based storage adapter**.
+This currently uses an **in-memory Map-based storage adapter**.
 
 Characteristics:
 
@@ -37,7 +37,7 @@ This prevents cross-repository rule leakage.
 
 ---
 
-## MVP Constraints
+## Current Constraints
 
 - No database persistence
 - No migrations
@@ -45,7 +45,7 @@ This prevents cross-repository rule leakage.
 - No concurrency guarantees
 - No audit history
 
-This is intentional for the MVP.
+This is intentional for now.
 
 ---
 
@@ -58,5 +58,4 @@ These are not part of the production trigger surface.
 
 ---
 
-> This document reflects the current MVP implementation.
-> Behavior may expand in future milestones.
+> This document reflects the current implementation. It evolves as development continues.

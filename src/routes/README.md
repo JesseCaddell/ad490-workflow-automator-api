@@ -1,11 +1,11 @@
-# Routes (MVP Boundary Guide)
+# Routes (Boundary Guide)
 
 This folder contains the HTTP routing layer for the API.
 
 This document exists to protect architectural boundaries.
 
 For full system documentation, see:
-- [workflow-builder-mvp](../../docs/workflow-builder-mvp.md)
+- [workflow-builder](../../docs/workflow-builder-mvp.md)
 - [api-contract](../../docs/api-contract.md)
 - [architecture](../../docs/architecture.md)
 
@@ -64,7 +64,7 @@ All non-204 responses must follow this shape.
 
 ---
 
-## Scope Model (MVP)
+## Scope Model
 
 Workflow routes require explicit scope headers:
 
@@ -96,8 +96,7 @@ This route must always use raw body middleware.
 
 ---
 
-> This document reflects the current MVP implementation.
-> Behavior may expand in future milestones.
+> This document reflects the current implementation. It evolves as development continues.
 
 ---
 
