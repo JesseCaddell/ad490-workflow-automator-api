@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "additionalDirectories": [
+      "../ad490-workflow-automator-web"
+    ]
+  }
+}

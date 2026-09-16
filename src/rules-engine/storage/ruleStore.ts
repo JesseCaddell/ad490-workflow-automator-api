@@ -24,7 +24,7 @@ export interface RuleStore {
 
     /**
      * Replace the rules for a given repo scope.
-     * MVP is "replace all" to keep it simple; add patching later if needed.
+     * Currently "replace all" to keep it simple; add patching later if needed.
      */
     upsertRulesForRepo(key: RuleOwnerKey, rules: Rule[]): Promise<void>;
 

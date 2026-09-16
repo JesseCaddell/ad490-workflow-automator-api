@@ -1,7 +1,6 @@
-# Storage Model (MVP)
+# Storage Model
 
-> This document reflects the current MVP implementation.  
-> Behavior may expand in future milestones.
+> This document reflects the current implementation. It evolves as development continues.
 
 This document defines the storage contracts for the AD490 Workflow Automator API.
 
@@ -10,7 +9,7 @@ The system uses storage adapters for:
 - Rules (Rules Engine)
 - Workflows (Workflow Builder)
 
-In the MVP, both use in-memory implementations.  
+Currently, both use in-memory implementations.  
 The system is intentionally designed so storage can be replaced later without refactoring engines.
 
 ---
@@ -71,7 +70,7 @@ The engine assumes:
 - Rule ordering is stable
 - Returned rule set is complete for that repository
 
-MVP implementation:
+Current implementation:
 
 - In-memory Map
 - Optional seed rules for development
@@ -172,7 +171,7 @@ This separation allows:
 
 ---
 
-# 9. MVP Implementation
+# 9. Current Implementation
 
 Current implementation:
 
@@ -184,7 +183,7 @@ Advantages:
 
 - Fast development
 - Minimal infrastructure complexity
-- Simplifies milestone demonstration
+- Simplifies demos
 
 Trade-offs:
 
@@ -194,9 +193,9 @@ Trade-offs:
 
 ---
 
-# 10. Out of Scope (MVP)
+# 10. Out of Scope
 
-Not supported in MVP:
+Not currently supported:
 
 - Persistent database storage
 - Distributed locking
@@ -207,7 +206,7 @@ Not supported in MVP:
 - Soft deletes
 - Audit history
 
-These may be introduced in future milestones.
+These may be introduced as development continues.
 
 ---
 
@@ -218,5 +217,5 @@ See also:
 - [architecture](architecture.md)
 - [api-contract](api-contract.md)
 - [rules-engine](rules-engine.md)
-- [workflow-builder-mvp](workflow-builder-mvp.md)
+- [workflow-builder](workflow-builder-mvp.md)
 - [normalization](normalization.md)

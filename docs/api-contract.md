@@ -1,7 +1,6 @@
-# API Contract (MVP)
+# API Contract
 
-> This document reflects the current MVP implementation.
-> Behavior may expand in future milestones.
+> This document reflects the current implementation. It evolves as development continues.
 
 This document defines the public HTTP contract for the AD490 Workflow Automator API.
 
@@ -14,7 +13,7 @@ It describes:
 - Error handling semantics
 - Webhook integration boundaries
 
-This document reflects the current MVP behavior and is intended to be demo-friendly and stable.
+This document reflects the current behavior and is intended to be stable and easy to demo.
 
 ---
 
@@ -72,7 +71,7 @@ The `details` field is present only for validation failures.
 
 ---
 
-# Scope Model (MVP)
+# Scope Model
 
 All workflow CRUD routes require explicit repository scope headers.
 
@@ -117,7 +116,7 @@ Response:
 
 ---
 
-# Workflow API (MVP)
+# Workflow API
 
 Base path:
 
@@ -267,7 +266,7 @@ error.details = [
 { "path": "trigger.event", "message": "Unsupported event: push" }
 ]
 
-Validation is strict and MVP-scoped.
+Validation is strict and scoped to the current workflow shape.
 
 ---
 
@@ -330,7 +329,7 @@ The API guarantees:
 
 ---
 
-# MVP Limitations
+# Current Limitations
 
 The following are intentionally out of scope:
 
@@ -344,7 +343,7 @@ The following are intentionally out of scope:
 - Scheduled workflows
 - Web UI authorization layer
 
-These may be introduced in future milestones.
+These may be introduced as development continues.
 
 ---
 

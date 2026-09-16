@@ -84,7 +84,7 @@ function readHeader(headers: GithubWebhookHeaders, key: string): string | undefi
 function toRuleEventName(event: string | undefined, action?: string): RuleEventName {
     if (!event) return "unknown";
 
-    // MVP: push + pull_request actions
+    // Currently supported: push + pull_request actions
     if (event === "push") return "push";
 
     if (event === "pull_request") {

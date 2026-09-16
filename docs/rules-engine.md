@@ -1,11 +1,10 @@
-# Rules Engine (MVP)
+# Rules Engine
 
-> This document reflects the current MVP implementation.  
-> Behavior may expand in future milestones.
+> This document reflects the current implementation. It evolves as development continues.
 
 This document defines the Rules Engine behavior for the AD490 Workflow Automator API.
 
-The Rules Engine evaluates condition-based rules against normalized GitHub events and executes actions (stubbed in MVP).
+The Rules Engine evaluates condition-based rules against normalized GitHub events and executes actions (currently via stubs).
 
 It operates entirely on normalized RuleContext data.
 
@@ -27,7 +26,7 @@ It does not:
 
 - Access raw GitHub webhook payloads
 - Persist rules
-- Mutate GitHub directly (MVP uses stubs)
+- Mutate GitHub directly (currently uses stubs)
 - Perform retries or rollback
 
 ---
@@ -50,7 +49,7 @@ When a webhook is received:
 
 ---
 
-# 3. Rule Shape (MVP)
+# 3. Rule Shape
 
 A rule contains:
 
@@ -90,7 +89,7 @@ Supported normalized events include:
 
 ---
 
-# 5. Condition System (MVP)
+# 5. Condition System
 
 Conditions are evaluated against ctx.data.
 
@@ -184,7 +183,7 @@ No randomness exists in evaluation.
 
 ---
 
-# 8. Action Execution (MVP)
+# 8. Action Execution
 
 Each matched rule produces one or more actions.
 
@@ -205,7 +204,7 @@ There is:
 
 # 9. Stub Execution Model
 
-In MVP, actions are executed via stubs.
+Currently, actions are executed via stubs.
 
 Supported stubbed action types:
 
@@ -241,7 +240,7 @@ Webhook route behavior:
 - Always returns 200 after successful normalization
 - Execution runs asynchronously
 
-There are no retries or compensation strategies in MVP.
+There are no retries or compensation strategies currently.
 
 ---
 
@@ -276,7 +275,7 @@ This supports deterministic demo output and debugging.
 
 ---
 
-# 13. Out of Scope (MVP)
+# 13. Out of Scope
 
 The following are intentionally not supported:
 
@@ -290,7 +289,7 @@ The following are intentionally not supported:
 - Partial action rollback
 - Dynamic rule mutation at runtime
 
-These may be introduced in future milestones.
+These may be introduced as development continues.
 
 ---
 
@@ -300,6 +299,6 @@ See also:
 
 - [architecture](architecture.md)
 - [normalization](normalization.md)
-- [workflow-builder-mvp](workflow-builder-mvp.md)
+- [workflow-builder](workflow-builder-mvp.md)
 - [api-contract](api-contract.md)
 - [storage](storage.md)

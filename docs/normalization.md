@@ -1,7 +1,6 @@
-# Webhook Event Normalization (MVP)
+# Webhook Event Normalization
 
-> This document reflects the current MVP implementation.  
-> Behavior may expand in future milestones.
+> This document reflects the current implementation. It evolves as development continues.
 
 This document defines the normalization boundary between raw GitHub webhook payloads and the internal automation engines.
 
@@ -100,7 +99,7 @@ Matching is exact string equality.
 
 ---
 
-# 5. Supported Events (MVP)
+# 5. Supported Events
 
 The normalization layer currently supports:
 
@@ -161,7 +160,7 @@ It allows:
 - Fast webhook triggering
 - Immediate visibility of normalization and execution logs
 
-It is not considered core business logic for the Workflow Builder MVP.
+It is not considered part of the Workflow Builder's core business logic.
 
 ---
 

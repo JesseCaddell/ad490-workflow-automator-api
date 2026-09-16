@@ -1,9 +1,8 @@
-# Workflow Builder MVP Contract (API)
+# Workflow Builder Contract (API)
 
-> This document reflects the current MVP implementation.
-> Behavior may expand in future milestones.
+> This document reflects the current implementation. It evolves as development continues.
 
-This document defines the **Workflow Builder MVP behavior** for the AD490 Workflow Automator API.
+This document defines the **Workflow Builder's current behavior** for the AD490 Workflow Automator API.
 
 It describes:
 
@@ -19,7 +18,7 @@ This document is demo-facing and reflects the current API implementation.
 
 ---
 
-# 1. Workflow Shape (MVP)
+# 1. Workflow Shape
 
 A workflow is a **single-trigger, sequential set of steps** scoped to one repository.
 
@@ -48,7 +47,7 @@ Constraints:
 - Exactly one trigger
 - Steps execute in array order
 - No branching
-- No conditions (MVP)
+- No conditions
 - No versioning
 - Maximum 25 steps
 - Workflow must contain at least 1 step
@@ -86,7 +85,7 @@ These are used to look up workflows for that repository only.
 
 ---
 
-# 3. Supported Trigger Events (MVP)
+# 3. Supported Trigger Events
 
 Workflow triggers must match normalized event names.
 
@@ -113,18 +112,18 @@ workflow.enabled === true
 AND
 workflow.trigger.event === ctx.event.name
 ```
-### Demo Event (Non-MVP Business Logic)
+### Demo Event (Not Part of Core Business Logic)
 
 - `push`
 
 This event exists only to allow quick webhook validation during live demos.
 
-It is not considered part of the official Workflow Builder MVP surface area and should not be used in production workflows.
+It is not considered part of the official Workflow Builder surface area and should not be used in production workflows.
 
 
 ---
 
-# 4. Supported Actions (MVP)
+# 4. Supported Actions
 
 Supported workflow action types:
 
@@ -226,7 +225,7 @@ Logs are structured JSON for demo clarity.
 
 ---
 
-# 8. Out of Scope (Intentional MVP Constraints)
+# 8. Out of Scope (Intentional Current Constraints)
 
 The following are NOT supported:
 
@@ -244,7 +243,7 @@ The following are NOT supported:
 
 # 9. Design Principles
 
-This MVP prioritizes:
+The current design prioritizes:
 
 - Determinism
 - Simplicity
@@ -253,8 +252,8 @@ This MVP prioritizes:
 - Explicit scoping
 - Safe stub execution
 
-It is intentionally minimal to support milestone demonstration while preserving architectural correctness.
+It is intentionally minimal, keeping architectural correctness while staying easy to demo.
 
 ---
 
-End of Workflow Builder MVP Contract.
+End of Workflow Builder Contract.

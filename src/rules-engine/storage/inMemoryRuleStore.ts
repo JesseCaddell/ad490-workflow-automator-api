@@ -6,12 +6,12 @@ function makeRepoKey(key: RuleOwnerKey): string {
 }
 
 function cloneRules(rules: Rule[]): Rule[] {
-    // shallow clone is enough for MVP; rules should be treated as immutable.
+    // shallow clone is enough for now; rules should be treated as immutable.
     return rules.map((r) => ({ ...r }));
 }
 
 /**
- * MVP-only, process-memory store.
+ * In-memory, process-local store.
  * Not persisted across restarts.
  */
 export class InMemoryRuleStore implements RuleStore {

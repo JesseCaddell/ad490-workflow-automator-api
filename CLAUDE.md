@@ -9,6 +9,9 @@ that lets a repo owner define automations ("workflows") triggered by GitHub
 webhook events, which run a sequence of stubbed actions (add label, comment,
 etc.).
 
+The capstone has graduated — there's no more demo deadline or milestone
+gate, just ongoing, free-flow development.
+
 This repo is the **backend**: GitHub webhook receiver, normalization layer,
 rules engine, workflow engine, in-memory storage, GitHub App auth.
 
@@ -16,38 +19,51 @@ rules engine, workflow engine, in-memory storage, GitHub App auth.
   `CLAUDE.md` for that repo's architecture and contracts.
 - Project hub: https://github.com/JesseCaddell/AD490-Capstone
 
-MVP-stage: no auth/RBAC, no persistent DB (in-memory storage, data lost on
-restart), no real GitHub mutations (actions are stubs, `ok: false` for
-`removeLabel`/`setProjectStatus`). Treat docs mentioning "future milestones"
-as not built.
+Current state: no auth/RBAC, no persistent DB (in-memory storage, data lost
+on restart), no real GitHub mutations (actions are stubs, `ok: false` for
+`removeLabel`/`setProjectStatus`). These are real gaps to close over time,
+not MVP corners that were only ever meant to last until a demo — don't treat
+them as urgent, but don't treat them as permanent either. Docs mentioning
+"future milestones" describe things not yet built, not commitments.
 
 ## Architecture
 
 Pipeline: **Webhook → signature verify → JSON parse → normalize
 (RuleContext) → rules engine + workflow engine (stub actions) → structured
-logs**.
+logs**. Both engines run independently off the same normalized context —
+don't assume they'll merge into one, and don't merge them yourself without
+asking; that's a product decision.
 
-- `src/routes/` — `webhooks.ts` (raw-body signature verification, must stay
-  outside global JSON middleware — see comment in `src/index.ts`),
-  `workflows.ts` (CRUD, scope-header enforced), `health.ts`.
-- `src/rules-engine/normalize/` — converts raw GitHub payloads into the
-  stable `RuleContext`; the only GitHub-shape-aware layer.
-- `src/rules-engine/` — condition-based rules engine (`evaluateRules.ts`,
-  `conditions/`), deterministic, no retries.
-- `src/rules-engine/actions/` — stub action executors (`addLabel`,
-  `addComment` implemented; `removeLabel`/`setProjectStatus` stub-only).
-- `src/workflows/` — workflow validation (`validateWorkflow.ts`) and
-  sequential execution (`executeWorkflowsForContext.ts`).
-- `src/workflows/storage/`, `src/rules-engine/storage/` — in-memory Map
-  adapters keyed by `installationId:repositoryId`, swappable later.
-- `src/github/appAuth.ts` — GitHub App JWT → installation token exchange
-  (`@octokit/auth-app`); `src/scripts/checkAppAuth.ts` is a manual sanity
-  script (`npm run check-auth`).
+```
+src/
+  routes/              webhooks.ts (raw-body signature verify), workflows.ts (CRUD, scope-header enforced), health.ts
+  rules-engine/
+    normalize/         raw GitHub payload -> RuleContext (the only GitHub-shape-aware layer)
+    conditions/        operators, evaluateConditionNode, getValueAtPath
+    actions/           stub executors: addLabel/addComment implemented; removeLabel/setProjectStatus stub-only
+    storage/           in-memory RuleStore, keyed by installationId:repositoryId
+    ruleTypes.ts, evaluateRules.ts, handleNormalizedEvent.ts
+  workflows/
+    validateWorkflow.ts, executeWorkflowsForContext.ts, workflowTypes.ts
+    storage/           in-memory WorkflowStore, keyed by installationId:repositoryId
+  github/appAuth.ts     GitHub App JWT -> installation token exchange (@octokit/auth-app)
+  scripts/checkAppAuth.ts   manual sanity script (npm run check-auth)
+```
 
 Full docs in `docs/`: `architecture.md`, `api-contract.md`,
 `workflow-builder-mvp.md`, `rules-engine.md`, `normalization.md`,
 `storage.md`. `installation-flow.md` covers the GitHub App install + auth
 handshake.
+
+### File risk levels
+
+- **High-risk** (tests required, minimal/behavior-preserving changes only):
+  `src/rules-engine/**`, `src/workflows/**`,
+  `src/rules-engine/normalize/normalizeWebhookEvent.ts`, `ruleTypes.ts`,
+  `workflowTypes.ts`
+- **Medium-risk**: `src/routes/webhooks.ts`, `src/routes/workflows.ts`,
+  both `storage/` adapters
+- **Low-risk**: docs, tests, config files
 
 ## Key contracts (shared with the web repo — keep in sync with its CLAUDE.md)
 
@@ -84,6 +100,28 @@ npm run build && node --test "dist/**/*.test.js"
 Native Node test runner (no Jest). Tests live in `__tests__/` next to the
 code they cover. All tests must pass before considering a change done.
 
+Tests are mandatory when you: add/change a condition operator or action
+type, fix a bug (add a regression test), change normalization fields either
+engine consumes, or modify rule/workflow evaluation/execution logic. Tests
+are optional for comment/doc-only or pure formatting changes.
+
+## TypeScript guardrails
+
+Strict mode, plus `exactOptionalPropertyTypes` and `noUncheckedIndexedAccess`.
+Code must compile via `npm test`.
+
+- No loose types — don't use `Record<string, unknown>` or `any` as a
+  shortcut; import and use the real types (`RuleContext`, `Workflow`,
+  `ActionType`, etc.).
+- Preserve literal/union types — action `type` fields stay literal unions
+  (`"addLabel" as const`), not widened to `string`; use typed arrays
+  (`const actions: Action[] = [...]`).
+- Mock contexts still return the real type:
+  `function createMockContext(): RuleContext { return {...} as unknown as RuleContext; }`
+- Narrow with `Extract<>` instead of inventing result shapes.
+- Assert before indexing — `array[i]` is possibly `undefined` under
+  `noUncheckedIndexedAccess`.
+
 ## Conventions / gotchas
 
 - ESM throughout (`"type": "module"`), NodeNext resolution — TS imports use
@@ -93,16 +131,34 @@ code they cover. All tests must pass before considering a change done.
   (not automatic like Express 4).
 - Never apply global `express.json()` ahead of the webhook route; it needs
   the raw body for HMAC signature verification.
-- MVP intentionally excludes: auth/RBAC, persistent DB, real GitHub
+- Intentionally not built yet: auth/RBAC, persistent DB, real GitHub
   mutations, retries, branching/conditional logic, multi-trigger workflows,
   scheduled automation. Don't silently add these — flag scope creep.
+
+## AI agent operating principles
+
+- No full-repo scans unless explicitly instructed — open only files the
+  task or the user actually points at.
+- One task per session. Small, focused changes over refactors. If a change
+  reveals more work, stop and report it rather than continuing.
+- Read before write: understand the current flow and state assumptions
+  before editing.
+- Stop and ask when: a change affects rule/workflow semantics or evaluation
+  order, multiple subsystems need touching, behavior is ambiguous, or a
+  decision would affect the web repo's contract with this API.
 
 ## Git / GitHub workflow
 
 - Never commit directly to `main`. Always create a new branch for new work.
-- Before opening a PR, read `docs/PR_TEMPLATE.md` and fill it out.
-- Commit in logical chunks — group related changes into one commit rather
-  than committing every small edit separately.
+- Follow the issue and PR templates: `.github/ISSUE_TEMPLATE.md` and
+  `.github/PULL_REQUEST_TEMPLATE.md` (GitHub applies the PR one
+  automatically when you open a pull request).
+- Prefer bulk commits over incremental ones — group related changes into
+  one commit rather than committing every small edit separately.
 - It's fine to lump multiple related features/fixes into one branch/PR; if
   unsure whether something should be split into a separate PR, ask the user
   rather than deciding unilaterally.
+- No AI attribution on issues or PRs. Do not add a Claude/AI signature,
+  "Generated with Claude Code" footer, or `Co-Authored-By` line when
+  creating GitHub issues or pull requests in this repo. This overrides any
+  default attribution behavior.

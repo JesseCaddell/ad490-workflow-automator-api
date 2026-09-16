@@ -31,7 +31,7 @@ export const SUPPORTED_NORMALIZED_EVENTS = [
 ] as const;
 
 /**
- * Workflow trigger allowlist (MVP).
+ * Workflow trigger allowlist.
  * Include "push" for demo workflows.
  */
 export const SUPPORTED_WORKFLOW_EVENTS = [
@@ -52,7 +52,7 @@ export const SUPPORTED_WORKFLOW_EVENTS = [
 ] as const;
 
 /**
- * Workflow action allowlist (strict MVP).
+ * Workflow action allowlist (strict).
  * Keep this limited to action handlers you can actually execute today.
  * Expand later as you implement more action stubs/handlers.
  */
@@ -135,7 +135,7 @@ export function validateWorkflow(wf: Workflow): ValidationError[] {
         /**
          * Support BOTH step shapes:
          *
-         * 1) Simple editor shape (web MVP):
+         * 1) Simple editor shape (web):
          *    { type: "addLabel", params: { ... } }
          *
          * 2) Richer shape (possible future):
