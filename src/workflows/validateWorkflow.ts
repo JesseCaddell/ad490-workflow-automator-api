@@ -181,5 +181,56 @@ export function validateWorkflow(wf: Workflow): ValidationError[] {
         }
     });
 
+    // Cross-step checks: reject contradicting and duplicate actions.
+    // (e.g. addLabel "wip" immediately undone by removeLabel "wip" in the same workflow)
+    const parsedSteps = wf.steps.map((stepRaw: any, i) => {
+        const hasActionObject = isObject((stepRaw as any)?.action);
+        const actionType = hasActionObject ? (stepRaw as any).action.type : (stepRaw as any)?.type;
+        const params = hasActionObject ? (stepRaw as any).action.params : (stepRaw as any)?.params;
+        return { index: i, actionType, params };
+    });
+
+    for (let j = 0; j < parsedSteps.length; j++) {
+        for (let i = 0; i < j; i++) {
+            const a = parsedSteps[i];
+            const b = parsedSteps[j];
+            if (!a || !b) continue;
+
+            if (a.actionType === b.actionType && deepEqual(a.params, b.params)) {
+                add(errors, `steps[${b.index}]`, `Duplicate of steps[${a.index}]: identical action and params.`);
+                continue;
+            }
+
+            const isAddRemoveLabelPair =
+                (a.actionType === "addLabel" && b.actionType === "removeLabel") ||
+                (a.actionType === "removeLabel" && b.actionType === "addLabel");
+
+            if (isAddRemoveLabelPair) {
+                const labelA = normalizeLabel((a.params as any)?.label);
+                const labelB = normalizeLabel((b.params as any)?.label);
+                if (labelA && labelB && labelA === labelB) {
+                    add(
+                        errors,
+                        `steps[${b.index}]`,
+                        `Conflicting actions: steps[${a.index}] and steps[${b.index}] both target label "${labelA}" (addLabel and removeLabel).`
+                    );
+                }
+            }
+        }
+    }
+
     return errors;
+}
+
+function normalizeLabel(v: unknown): string | undefined {
+    return typeof v === "string" && v.trim().length > 0 ? v.trim().toLowerCase() : undefined;
+}
+
+function deepEqual(a: unknown, b: unknown): boolean {
+    if (a === b) return true;
+    if (!isObject(a) || !isObject(b)) return false;
+    const aKeys = Object.keys(a);
+    const bKeys = Object.keys(b);
+    if (aKeys.length !== bKeys.length) return false;
+    return aKeys.every((k) => deepEqual((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k]));
 }
